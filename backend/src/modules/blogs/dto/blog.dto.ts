@@ -8,19 +8,20 @@ import {
 
 export class CreateBlogDto {
   @IsString()
-  @MinLength(5)
+  @MinLength(3)
   title: string;
 
   @IsString()
-  @MinLength(10)
+  @MinLength(5)
   excerpt: string;
 
   @IsString()
-  @MinLength(50)
+  @MinLength(10)
   content: string;
 
+  @IsOptional()
   @IsString()
-  author: string;
+  author?: string;
 
   @IsOptional()
   @IsString()
@@ -47,4 +48,48 @@ export class CreateBlogDto {
   readTime?: string;
 }
 
-export class UpdateBlogDto extends CreateBlogDto {}
+export class UpdateBlogDto {
+  @IsOptional()
+  @IsString()
+  @MinLength(3)
+  title?: string;
+
+  @IsOptional()
+  @IsString()
+  @MinLength(5)
+  excerpt?: string;
+
+  @IsOptional()
+  @IsString()
+  @MinLength(10)
+  content?: string;
+
+  @IsOptional()
+  @IsString()
+  author?: string;
+
+  @IsOptional()
+  @IsString()
+  authorImage?: string;
+
+  @IsOptional()
+  @IsString()
+  authorBio?: string;
+
+  @IsOptional()
+  @IsString()
+  category?: string;
+
+  @IsOptional()
+  @IsArray()
+  @IsString({ each: true })
+  tags?: string[];
+
+  @IsOptional()
+  @IsBoolean()
+  published?: boolean;
+
+  @IsOptional()
+  @IsString()
+  readTime?: string;
+}

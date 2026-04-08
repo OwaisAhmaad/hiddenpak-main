@@ -27,13 +27,20 @@ export class BlogsService {
 
     let coverImage = '';
     let coverImagePublicId = '';
-    if (file) {
+    if (file?.buffer) {
       const r = await this.cloudinary.upload(file.buffer, 'hiddenpak/blogs');
       coverImage = r.url;
       coverImagePublicId = r.publicId;
     }
 
-    return this.repo.create({ ...dto, slug, coverImage, coverImagePublicId });
+    const blog = await this.repo.create({
+      ...dto,
+      slug,
+      coverImage,
+      coverImagePublicId,
+    });
+
+    return { message: 'Blog created successfully', data: blog };
   }
 
   async getAll(query: PaginationQuery & { category?: string }) {
@@ -43,13 +50,13 @@ export class BlogsService {
       this.repo.findAll(filter, { skip, limit }),
       this.repo.count(filter),
     ]);
-    return { data, meta: buildMeta(total, page, limit) };
+    return { message: 'OK', data, meta: buildMeta(total, page, limit) };
   }
 
   async getBySlug(slug: string) {
     const blog = await this.repo.findOne({ slug, published: true });
     if (!blog) throw new NotFoundException('Blog not found');
-    return blog;
+    return { message: 'OK', data: blog };
   }
 
   async update(id: string, dto: UpdateBlogDto, file?: Express.Multer.File) {
@@ -58,7 +65,7 @@ export class BlogsService {
 
     const updates: any = { ...dto };
 
-    if (file) {
+    if (file?.buffer) {
       if (blog.coverImagePublicId) {
         await this.cloudinary.delete(blog.coverImagePublicId);
       }
@@ -69,7 +76,8 @@ export class BlogsService {
 
     if (dto.title) updates.slug = generateSlug(dto.title);
 
-    return this.repo.updateById(id, updates);
+    const updated = await this.repo.updateById(id, updates);
+    return { message: 'Blog updated successfully', data: updated };
   }
 
   async remove(id: string) {
@@ -78,6 +86,7 @@ export class BlogsService {
     if (blog.coverImagePublicId) {
       await this.cloudinary.delete(blog.coverImagePublicId);
     }
-    return this.repo.deleteById(id);
+    await this.repo.deleteById(id);
+    return { message: 'Blog deleted successfully', data: null };
   }
 }

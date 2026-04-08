@@ -10,10 +10,19 @@ export class BlogsRepository extends BaseRepository<BlogDocument> {
     super(model);
   }
 
-  searchFilter(search?: string, category?: string): FilterQuery<BlogDocument> {
+  searchFilter(
+    search?: string,
+    category?: string,
+  ): FilterQuery<BlogDocument> {
     const filter: FilterQuery<BlogDocument> = { published: true };
-    if (search) filter.$text = { $search: search };
-    if (category) filter.category = category;
+    if (search) {
+      filter.$or = [
+        { title: { $regex: search, $options: 'i' } },
+        { excerpt: { $regex: search, $options: 'i' } },
+        { content: { $regex: search, $options: 'i' } },
+      ];
+    }
+    if (category) filter.category = { $regex: category, $options: 'i' };
     return filter;
   }
 }

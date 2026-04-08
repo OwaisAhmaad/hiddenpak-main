@@ -3,6 +3,8 @@ import {
   Controller,
   Delete,
   Get,
+  HttpCode,
+  HttpStatus,
   Param,
   Patch,
   Post,
@@ -33,7 +35,11 @@ export class BlogsController {
   @Post()
   @UseGuards(JwtAuthGuard)
   @UseInterceptors(FileInterceptor('image'))
-  create(@Body() dto: CreateBlogDto, @UploadedFile() file?: Express.Multer.File) {
+  @HttpCode(HttpStatus.CREATED)
+  create(
+    @Body() dto: CreateBlogDto,
+    @UploadedFile() file?: Express.Multer.File,
+  ) {
     return this.service.create(dto, file);
   }
 
@@ -50,6 +56,7 @@ export class BlogsController {
 
   @Delete(':id')
   @UseGuards(JwtAuthGuard)
+  @HttpCode(HttpStatus.OK)
   remove(@Param('id') id: string) {
     return this.service.remove(id);
   }

@@ -17,13 +17,13 @@ export class Blog {
   @Prop({ required: true })
   content: string;
 
-  @Prop({ required: true })
+  @Prop({ default: '' })
   coverImage: string;
 
   @Prop({ default: '' })
   coverImagePublicId: string;
 
-  @Prop({ required: true })
+  @Prop({ default: 'HiddenPak Team' })
   author: string;
 
   @Prop({ default: '' })
