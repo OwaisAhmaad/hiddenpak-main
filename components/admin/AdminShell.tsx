@@ -2,7 +2,9 @@
 
 import AdminSidebar from "./AdminSidebar";
 import { Bell, Search, Menu, X } from "lucide-react";
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
+import { authService } from "@/lib/services/auth.service";
 
 export default function AdminShell({
   children,
@@ -11,7 +13,19 @@ export default function AdminShell({
   children: React.ReactNode;
   title: string;
 }) {
+  const router = useRouter();
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [authChecked, setAuthChecked] = useState(false);
+
+  useEffect(() => {
+    if (!authService.isAuthenticated()) {
+      router.replace("/admin/login");
+    } else {
+      setAuthChecked(true);
+    }
+  }, [router]);
+
+  if (!authChecked) return null;
 
   return (
     <div className="flex min-h-screen bg-gray-950">
