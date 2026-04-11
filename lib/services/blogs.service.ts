@@ -5,6 +5,7 @@ export interface BlogQuery {
   limit?: number;
   search?: string;
   category?: string;
+  status?: string;
 }
 
 export interface CreateBlogPayload {

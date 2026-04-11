@@ -1,8 +1,10 @@
 import { Module } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { MongooseModule } from '@nestjs/mongoose';
+import { AdminModule } from './modules/admin/admin.module';
 import { AuthModule } from './modules/auth/auth.module';
 import { BlogsModule } from './modules/blogs/blogs.module';
+import { CategoriesModule } from './modules/categories/categories.module';
 import { GalleryModule } from './modules/gallery/gallery.module';
 import { PlacesModule } from './modules/places/places.module';
 import { UsersModule } from './modules/users/users.module';
@@ -16,11 +18,13 @@ import { UsersModule } from './modules/users/users.module';
         uri: config.get<string>('MONGO_URI'),
       }),
     }),
+    AdminModule,
     AuthModule,
     UsersModule,
     BlogsModule,
     PlacesModule,
     GalleryModule,
+    CategoriesModule,
   ],
 })
 export class AppModule {}

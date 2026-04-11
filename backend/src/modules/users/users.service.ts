@@ -27,4 +27,8 @@ export class UsersService {
     const hashed = await bcrypt.hash(password, 10);
     return this.repo.create({ email, password: hashed, role: 'admin' });
   }
+
+  async updateById(id: string, update: Record<string, any>) {
+    return this.repo.updateById(id, update);
+  }
 }

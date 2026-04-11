@@ -1,42 +1,50 @@
 import {
-  Body,
   Controller,
-  Delete,
   Get,
-  Param,
   Post,
+  Delete,
+  Body,
+  Param,
   Query,
   UploadedFile,
-  UseGuards,
   UseInterceptors,
+  UseGuards,
+  HttpCode,
+  HttpStatus,
 } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
-import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
-import { CreateGalleryDto } from './dto/gallery.dto';
 import { GalleryService } from './gallery.service';
+import { CreateGalleryDto } from './dto/gallery.dto';
+import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
+import { RolesGuard } from '../auth/guards/roles.guard';
+import { Roles } from '../auth/decorators/roles.decorator';
 
 @Controller('gallery')
 export class GalleryController {
-  constructor(private service: GalleryService) {}
+  constructor(private readonly galleryService: GalleryService) {}
 
   @Get()
-  getAll(@Query() query: any) {
-    return this.service.getAll(query);
+  getAll(@Query('page') page?: string, @Query('limit') limit?: string) {
+    return this.galleryService.getAll({ page, limit });
   }
 
   @Post()
-  @UseGuards(JwtAuthGuard)
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles('admin')
+  @HttpCode(HttpStatus.CREATED)
   @UseInterceptors(FileInterceptor('image'))
   upload(
     @UploadedFile() file: Express.Multer.File,
     @Body() dto: CreateGalleryDto,
   ) {
-    return this.service.upload(file, dto);
+    return this.galleryService.upload(file, dto);
   }
 
   @Delete(':id')
-  @UseGuards(JwtAuthGuard)
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles('admin')
+  @HttpCode(HttpStatus.OK)
   remove(@Param('id') id: string) {
-    return this.service.remove(id);
+    return this.galleryService.remove(id);
   }
 }

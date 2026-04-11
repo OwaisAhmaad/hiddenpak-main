@@ -7,7 +7,6 @@ import { CloudinaryService } from '../../common/cloudinary.service';
 import {
   buildMeta,
   buildPagination,
-  PaginationQuery,
 } from '../../common/pagination.util';
 import { generateSlug } from '../../common/slug.util';
 import { BlogsRepository } from './blogs.repository';
@@ -43,20 +42,28 @@ export class BlogsService {
     return { message: 'Blog created successfully', data: blog };
   }
 
-  async getAll(query: PaginationQuery & { category?: string }) {
+  async getAll(query: { page?: string; limit?: string; search?: string; category?: string; status?: string }) {
     const { skip, limit, page } = buildPagination(query);
-    const filter = this.repo.searchFilter(query.search, query.category);
+    const filter = this.repo.buildFilter({
+      search: query.search,
+      category: query.category,
+      status: query.status,
+    });
     const [data, total] = await Promise.all([
-      this.repo.findAll(filter, { skip, limit }),
+      this.repo.findAll(filter, { skip, limit, sort: { createdAt: -1 } }),
       this.repo.count(filter),
     ]);
-    return { message: 'OK', data, meta: buildMeta(total, page, limit) };
+    return {
+      message: 'Blogs retrieved successfully',
+      data,
+      meta: buildMeta(total, page, limit),
+    };
   }
 
   async getBySlug(slug: string) {
-    const blog = await this.repo.findOne({ slug, published: true });
+    const blog = await this.repo.findOne({ slug });
     if (!blog) throw new NotFoundException('Blog not found');
-    return { message: 'OK', data: blog };
+    return { message: 'Blog retrieved successfully', data: blog };
   }
 
   async update(id: string, dto: UpdateBlogDto, file?: Express.Multer.File) {

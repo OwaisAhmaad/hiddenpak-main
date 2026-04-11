@@ -6,23 +6,55 @@ import { Blog, BlogDocument } from '../../database/schemas/blog.schema';
 
 @Injectable()
 export class BlogsRepository extends BaseRepository<BlogDocument> {
-  constructor(@InjectModel(Blog.name) model: Model<BlogDocument>) {
-    super(model);
+  constructor(@InjectModel(Blog.name) private blogModel: Model<BlogDocument>) {
+    super(blogModel);
   }
 
-  searchFilter(
-    search?: string,
-    category?: string,
-  ): FilterQuery<BlogDocument> {
-    const filter: FilterQuery<BlogDocument> = { published: true };
-    if (search) {
+  buildFilter(opts: {
+    search?: string;
+    category?: string;
+    status?: string;
+    published?: boolean;
+  }): FilterQuery<BlogDocument> {
+    const filter: FilterQuery<BlogDocument> = {};
+
+    // published/status filter
+    if (opts.status === 'published') {
+      filter.published = true;
+    } else if (opts.status === 'draft') {
+      filter.published = false;
+    } else if (opts.published !== undefined) {
+      filter.published = opts.published;
+    }
+
+    // category filter — match string field OR categorySlug
+    if (opts.category) {
       filter.$or = [
-        { title: { $regex: search, $options: 'i' } },
-        { excerpt: { $regex: search, $options: 'i' } },
-        { content: { $regex: search, $options: 'i' } },
+        { category: { $regex: opts.category, $options: 'i' } },
+        { categorySlug: opts.category.toLowerCase() },
       ];
     }
-    if (category) filter.category = { $regex: category, $options: 'i' };
+
+    // text search with $regex (no text index required)
+    if (opts.search) {
+      const searchRegex = { $regex: opts.search, $options: 'i' };
+      const searchFilter = {
+        $or: [
+          { title: searchRegex },
+          { excerpt: searchRegex },
+          { content: searchRegex },
+          { author: searchRegex },
+        ],
+      };
+      if (filter.$or) {
+        // combine category + search with $and
+        filter.$and = [{ $or: filter.$or }, searchFilter];
+        delete filter.$or;
+      } else {
+        filter.$or = searchFilter.$or;
+      }
+    }
+
     return filter;
   }
 }

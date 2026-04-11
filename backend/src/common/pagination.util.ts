@@ -1,7 +1,8 @@
 export interface PaginationQuery {
-  page?: number;
-  limit?: number;
+  page?: number | string;
+  limit?: number | string;
   search?: string;
+  [key: string]: unknown;
 }
 
 export interface PaginationMeta {
