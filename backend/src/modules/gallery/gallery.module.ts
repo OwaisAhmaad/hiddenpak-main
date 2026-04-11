@@ -2,7 +2,7 @@ import { Module } from '@nestjs/common';
 import { MongooseModule } from '@nestjs/mongoose';
 import { CloudinaryService } from '../../common/cloudinary.service';
 import { Gallery, GallerySchema } from '../../database/schemas/gallery.schema';
-import { GalleryController } from './gallery.controller';
+import { GalleryAdminController, GalleryPublicController } from './gallery.controller';
 import { GalleryRepository } from './gallery.repository';
 import { GalleryService } from './gallery.service';
 
@@ -12,7 +12,7 @@ import { GalleryService } from './gallery.service';
       { name: Gallery.name, schema: GallerySchema },
     ]),
   ],
-  controllers: [GalleryController],
+  controllers: [GalleryPublicController, GalleryAdminController],
   providers: [GalleryService, GalleryRepository, CloudinaryService],
 })
 export class GalleryModule {}

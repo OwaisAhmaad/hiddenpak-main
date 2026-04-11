@@ -1,22 +1,28 @@
 import {
   IsArray,
-  IsBoolean,
+  IsEnum,
   IsOptional,
   IsString,
   MinLength,
 } from 'class-validator';
+import { Transform } from 'class-transformer';
+
+export enum BlogStatus {
+  DRAFT = 'draft',
+  PUBLISHED = 'published',
+}
 
 export class CreateBlogDto {
   @IsString()
   @MinLength(3)
   title: string;
 
+  @IsOptional()
   @IsString()
-  @MinLength(5)
-  excerpt: string;
+  excerpt?: string;
 
   @IsString()
-  @MinLength(1)
+  @MinLength(10)
   content: string;
 
   @IsOptional()
@@ -31,17 +37,36 @@ export class CreateBlogDto {
   @IsString()
   authorBio?: string;
 
+  @IsOptional()
   @IsString()
-  category: string;
+  category?: string;
 
   @IsOptional()
+  @IsString()
+  categoryId?: string;
+
+  @IsOptional()
+  @IsEnum(BlogStatus)
+  status?: BlogStatus;
+
+  @IsOptional()
+  @Transform(({ value }) =>
+    value === 'true' || value === true
+      ? true
+      : value === 'false' || value === false
+        ? false
+        : undefined,
+  )
+  published?: boolean;
+
+  @IsOptional()
+  @Transform(({ value }) => {
+    if (!value) return [];
+    return Array.isArray(value) ? value : [value];
+  })
   @IsArray()
   @IsString({ each: true })
   tags?: string[];
-
-  @IsOptional()
-  @IsBoolean()
-  published?: boolean;
 
   @IsOptional()
   @IsString()
@@ -56,12 +81,11 @@ export class UpdateBlogDto {
 
   @IsOptional()
   @IsString()
-  @MinLength(5)
   excerpt?: string;
 
   @IsOptional()
   @IsString()
-  @MinLength(1)
+  @MinLength(10)
   content?: string;
 
   @IsOptional()
@@ -81,13 +105,31 @@ export class UpdateBlogDto {
   category?: string;
 
   @IsOptional()
+  @IsString()
+  categoryId?: string;
+
+  @IsOptional()
+  @IsEnum(BlogStatus)
+  status?: BlogStatus;
+
+  @IsOptional()
+  @Transform(({ value }) =>
+    value === 'true' || value === true
+      ? true
+      : value === 'false' || value === false
+        ? false
+        : undefined,
+  )
+  published?: boolean;
+
+  @IsOptional()
+  @Transform(({ value }) => {
+    if (!value) return [];
+    return Array.isArray(value) ? value : [value];
+  })
   @IsArray()
   @IsString({ each: true })
   tags?: string[];
-
-  @IsOptional()
-  @IsBoolean()
-  published?: boolean;
 
   @IsOptional()
   @IsString()

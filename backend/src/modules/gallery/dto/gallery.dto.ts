@@ -5,6 +5,11 @@ export class CreateGalleryDto {
   @IsString()
   alt?: string;
 
+  /** Caption shown below image in gallery — maps to imageUrl response */
+  @IsOptional()
+  @IsString()
+  caption?: string;
+
   @IsOptional()
   @IsString()
   location?: string;

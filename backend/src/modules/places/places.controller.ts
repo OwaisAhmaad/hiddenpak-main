@@ -19,9 +19,11 @@ import { CreatePlaceDto, UpdatePlaceDto } from './dto/place.dto';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { RolesGuard } from '../auth/guards/roles.guard';
 import { Roles } from '../auth/decorators/roles.decorator';
+import { singleImageOptions } from '../../common/multer.config';
 
+// ── Public routes ──────────────────────────────────────────────
 @Controller('places')
-export class PlacesController {
+export class PlacesPublicController {
   constructor(private readonly placesService: PlacesService) {}
 
   @Get()
@@ -39,12 +41,18 @@ export class PlacesController {
   getBySlug(@Param('slug') slug: string) {
     return this.placesService.getBySlug(slug);
   }
+}
+
+// ── Admin routes ────────────────────────────────────────────────
+@Controller('admin/places')
+export class PlacesAdminController {
+  constructor(private readonly placesService: PlacesService) {}
 
   @Post()
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles('admin')
   @HttpCode(HttpStatus.CREATED)
-  @UseInterceptors(FileInterceptor('image'))
+  @UseInterceptors(FileInterceptor('image', singleImageOptions))
   create(
     @Body() dto: CreatePlaceDto,
     @UploadedFile() file?: Express.Multer.File,
@@ -55,7 +63,7 @@ export class PlacesController {
   @Patch(':id')
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles('admin')
-  @UseInterceptors(FileInterceptor('image'))
+  @UseInterceptors(FileInterceptor('image', singleImageOptions))
   update(
     @Param('id') id: string,
     @Body() dto: UpdatePlaceDto,
@@ -67,7 +75,7 @@ export class PlacesController {
   @Post(':id/gallery')
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles('admin')
-  @UseInterceptors(FileInterceptor('image'))
+  @UseInterceptors(FileInterceptor('image', singleImageOptions))
   addGalleryImage(
     @Param('id') id: string,
     @UploadedFile() file: Express.Multer.File,

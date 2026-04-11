@@ -9,30 +9,27 @@ export interface PlaceQuery {
 }
 
 export const placesService = {
+  // ── Public ─────────────────────────────────────────────
   getAll: (query: PlaceQuery = {}) =>
     api.get('/places', { params: query }).then((r) => r.data),
 
   getBySlug: (slug: string) =>
     api.get(`/places/${slug}`).then((r) => r.data),
 
+  // ── Admin (require Bearer token via Axios interceptor) ──
+  // Do NOT set Content-Type manually — Axios sets multipart/form-data with boundary automatically
   create: (formData: FormData) =>
-    api.post('/places', formData, {
-      headers: { 'Content-Type': 'multipart/form-data' },
-    }).then((r) => r.data),
+    api.post('/admin/places', formData).then((r) => r.data),
 
   update: (id: string, formData: FormData) =>
-    api.patch(`/places/${id}`, formData, {
-      headers: { 'Content-Type': 'multipart/form-data' },
-    }).then((r) => r.data),
+    api.patch(`/admin/places/${id}`, formData).then((r) => r.data),
 
   addGalleryImage: (id: string, file: File) => {
     const fd = new FormData();
     fd.append('image', file);
-    return api.post(`/places/${id}/gallery`, fd, {
-      headers: { 'Content-Type': 'multipart/form-data' },
-    }).then((r) => r.data);
+    return api.post(`/admin/places/${id}/gallery`, fd).then((r) => r.data);
   },
 
   remove: (id: string) =>
-    api.delete(`/places/${id}`).then((r) => r.data),
+    api.delete(`/admin/places/${id}`).then((r) => r.data),
 };

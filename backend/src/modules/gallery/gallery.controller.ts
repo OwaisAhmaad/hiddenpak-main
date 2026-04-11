@@ -18,21 +18,32 @@ import { CreateGalleryDto } from './dto/gallery.dto';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { RolesGuard } from '../auth/guards/roles.guard';
 import { Roles } from '../auth/decorators/roles.decorator';
+import { singleImageOptions } from '../../common/multer.config';
 
+// ── Public routes ──────────────────────────────────────────────
 @Controller('gallery')
-export class GalleryController {
+export class GalleryPublicController {
   constructor(private readonly galleryService: GalleryService) {}
 
   @Get()
-  getAll(@Query('page') page?: string, @Query('limit') limit?: string) {
+  getAll(
+    @Query('page') page?: string,
+    @Query('limit') limit?: string,
+  ) {
     return this.galleryService.getAll({ page, limit });
   }
+}
+
+// ── Admin routes ────────────────────────────────────────────────
+@Controller('admin/gallery')
+export class GalleryAdminController {
+  constructor(private readonly galleryService: GalleryService) {}
 
   @Post()
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles('admin')
   @HttpCode(HttpStatus.CREATED)
-  @UseInterceptors(FileInterceptor('image'))
+  @UseInterceptors(FileInterceptor('image', singleImageOptions))
   upload(
     @UploadedFile() file: Express.Multer.File,
     @Body() dto: CreateGalleryDto,

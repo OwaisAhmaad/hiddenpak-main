@@ -19,9 +19,11 @@ import { CreateBlogDto, UpdateBlogDto } from './dto/blog.dto';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { RolesGuard } from '../auth/guards/roles.guard';
 import { Roles } from '../auth/decorators/roles.decorator';
+import { singleImageOptions } from '../../common/multer.config';
 
+// ── Public routes ──────────────────────────────────────────────
 @Controller('blogs')
-export class BlogsController {
+export class BlogsPublicController {
   constructor(private readonly blogsService: BlogsService) {}
 
   @Get()
@@ -39,12 +41,18 @@ export class BlogsController {
   getBySlug(@Param('slug') slug: string) {
     return this.blogsService.getBySlug(slug);
   }
+}
+
+// ── Admin routes ────────────────────────────────────────────────
+@Controller('admin/blogs')
+export class BlogsAdminController {
+  constructor(private readonly blogsService: BlogsService) {}
 
   @Post()
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles('admin')
   @HttpCode(HttpStatus.CREATED)
-  @UseInterceptors(FileInterceptor('image'))
+  @UseInterceptors(FileInterceptor('coverImage', singleImageOptions))
   create(
     @Body() dto: CreateBlogDto,
     @UploadedFile() file?: Express.Multer.File,
@@ -55,7 +63,7 @@ export class BlogsController {
   @Patch(':id')
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles('admin')
-  @UseInterceptors(FileInterceptor('image'))
+  @UseInterceptors(FileInterceptor('coverImage', singleImageOptions))
   update(
     @Param('id') id: string,
     @Body() dto: UpdateBlogDto,

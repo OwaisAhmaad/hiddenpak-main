@@ -11,18 +11,23 @@ export class Place {
   @Prop({ required: true, unique: true })
   slug: string;
 
-  @Prop({ required: true })
+  @Prop({ default: '' })
   region: string;
 
-  @Prop({ required: true })
+  @Prop({ default: '' })
   category: string;
 
   @Prop({ required: true })
   description: string;
 
-  @Prop({ required: true })
+  @Prop({ default: '' })
   longDescription: string;
 
+  /** Free-text location / address, e.g. "Gilgit-Baltistan, Pakistan" */
+  @Prop({ default: '' })
+  location: string;
+
+  /** Primary cover image URL (from Cloudinary) */
   @Prop({ default: '' })
   image: string;
 

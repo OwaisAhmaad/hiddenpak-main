@@ -10,15 +10,18 @@ export interface BlogQuery {
 
 export interface CreateBlogPayload {
   title: string;
-  excerpt: string;
+  excerpt?: string;
   content: string;
-  category: string;
+  category?: string;
+  categoryId?: string;
+  status?: 'draft' | 'published';
   author?: string;
   authorBio?: string;
   tags?: string[];
   published?: boolean;
   readTime?: string;
-  image?: File;
+  /** Field name for backend: coverImage */
+  coverImage?: File;
 }
 
 function toBlogFormData(payload: CreateBlogPayload): FormData {
@@ -26,8 +29,8 @@ function toBlogFormData(payload: CreateBlogPayload): FormData {
   (Object.keys(payload) as (keyof CreateBlogPayload)[]).forEach((key) => {
     const val = payload[key];
     if (val === undefined || val === null) return;
-    if (key === 'image' && val instanceof File) {
-      fd.append('image', val);
+    if (key === 'coverImage' && val instanceof File) {
+      fd.append('coverImage', val);          // matches FileInterceptor('coverImage')
     } else if (key === 'tags' && Array.isArray(val)) {
       val.forEach((t) => fd.append('tags[]', t));
     } else {
@@ -38,18 +41,20 @@ function toBlogFormData(payload: CreateBlogPayload): FormData {
 }
 
 export const blogsService = {
+  // ── Public ─────────────────────────────────────────────
   getAll: (query: BlogQuery = {}) =>
     api.get('/blogs', { params: query }).then((r) => r.data),
 
   getBySlug: (slug: string) =>
     api.get(`/blogs/${slug}`).then((r) => r.data),
 
+  // ── Admin (require Bearer token via Axios interceptor) ──
   create: (payload: CreateBlogPayload) =>
-    api.post('/blogs', toBlogFormData(payload)).then((r) => r.data),
+    api.post('/admin/blogs', toBlogFormData(payload)).then((r) => r.data),
 
   update: (id: string, payload: Partial<CreateBlogPayload>) =>
-    api.patch(`/blogs/${id}`, toBlogFormData(payload as CreateBlogPayload)).then((r) => r.data),
+    api.patch(`/admin/blogs/${id}`, toBlogFormData(payload as CreateBlogPayload)).then((r) => r.data),
 
   remove: (id: string) =>
-    api.delete(`/blogs/${id}`).then((r) => r.data),
+    api.delete(`/admin/blogs/${id}`).then((r) => r.data),
 };

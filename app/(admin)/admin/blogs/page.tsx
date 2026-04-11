@@ -111,7 +111,7 @@ export default function AdminBlogsPage() {
     setSubmitting(true);
     try {
       const payload: CreateBlogPayload = { ...form };
-      if (imageFile) payload.image = imageFile;
+      if (imageFile) payload.coverImage = imageFile;
       await blogsService.create(payload);
       setSuccessMsg("Blog post created successfully!");
       fetchBlogs();
