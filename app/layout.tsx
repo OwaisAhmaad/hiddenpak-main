@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
-import { Inter, Poppins } from "next/font/google";
+import { Inter, Poppins, Noto_Nastaliq_Urdu } from "next/font/google";
 import "./globals.css";
+import { LanguageProvider } from "@/lib/i18n/LanguageContext";
 
 const inter = Inter({
   subsets: ["latin"],
@@ -12,6 +13,12 @@ const poppins = Poppins({
   subsets: ["latin"],
   variable: "--font-poppins",
   weight: ["400", "500", "600", "700", "800"],
+});
+
+const notoNastaliq = Noto_Nastaliq_Urdu({
+  subsets: ["arabic"],
+  variable: "--font-urdu",
+  weight: ["400", "500", "600", "700"],
 });
 
 export const metadata: Metadata = {
@@ -30,6 +37,8 @@ export const metadata: Metadata = {
     "Hunza Valley",
     "Gilgit-Baltistan",
     "KPK travel",
+    "پاکستان سیاحت",
+    "پوشیدہ مقامات",
   ],
   authors: [{ name: "HiddenPak Team" }],
   creator: "HiddenPak",
@@ -76,11 +85,11 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="en" className="dark scroll-smooth">
+    <html lang="en" dir="ltr" className="dark scroll-smooth">
       <body
-        className={`${inter.variable} ${poppins.variable} font-sans bg-dark text-beige antialiased`}
+        className={`${inter.variable} ${poppins.variable} ${notoNastaliq.variable} font-sans bg-dark text-beige antialiased`}
       >
-        {children}
+        <LanguageProvider>{children}</LanguageProvider>
       </body>
     </html>
   );
