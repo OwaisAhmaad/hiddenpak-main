@@ -45,4 +45,44 @@ export class CreatePlaceDto {
   published?: boolean;
 }
 
-export class UpdatePlaceDto extends CreatePlaceDto {}
+export class UpdatePlaceDto {
+  @IsOptional()
+  @IsString()
+  @MinLength(2)
+  name?: string;
+
+  @IsOptional()
+  @IsString()
+  region?: string;
+
+  @IsOptional()
+  @IsString()
+  category?: string;
+
+  @IsOptional()
+  @IsString()
+  @MinLength(10)
+  description?: string;
+
+  @IsOptional()
+  @IsString()
+  @MinLength(20)
+  longDescription?: string;
+
+  @IsOptional()
+  @IsNumber()
+  @Type(() => Number)
+  rating?: number;
+
+  @IsOptional()
+  @IsString()
+  altitude?: string;
+
+  @IsOptional()
+  @IsString()
+  bestTime?: string;
+
+  @IsOptional()
+  @IsBoolean()
+  published?: boolean;
+}

@@ -8,6 +8,7 @@ import { CategoriesModule } from './modules/categories/categories.module';
 import { GalleryModule } from './modules/gallery/gallery.module';
 import { PlacesModule } from './modules/places/places.module';
 import { UsersModule } from './modules/users/users.module';
+import { AnalyticsModule } from './modules/analytics/analytics.module';
 
 @Module({
   imports: [
@@ -15,7 +16,7 @@ import { UsersModule } from './modules/users/users.module';
     MongooseModule.forRootAsync({
       inject: [ConfigService],
       useFactory: (config: ConfigService) => ({
-        uri: config.get<string>('MONGO_URI'),
+        uri: config.get<string>('MONGO_URI') || config.get<string>('MONGODB_URI'),
       }),
     }),
     AdminModule,
@@ -25,6 +26,7 @@ import { UsersModule } from './modules/users/users.module';
     PlacesModule,
     GalleryModule,
     CategoriesModule,
+    AnalyticsModule,
   ],
 })
 export class AppModule {}

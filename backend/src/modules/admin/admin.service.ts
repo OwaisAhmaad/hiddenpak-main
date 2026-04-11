@@ -46,7 +46,8 @@ export class AdminService {
     }
 
     if (Object.keys(update).length === 0) {
-      return { message: 'No changes made', data: user };
+      const { password, refreshToken, ...safe } = (user as any).toObject();
+      return { message: 'No changes made', data: safe };
     }
 
     const updated = await this.usersService.updateById(userId, update);

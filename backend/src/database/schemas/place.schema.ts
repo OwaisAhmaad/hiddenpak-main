@@ -23,7 +23,7 @@ export class Place {
   @Prop({ required: true })
   longDescription: string;
 
-  @Prop({ required: true })
+  @Prop({ default: '' })
   image: string;
 
   @Prop({ default: '' })
