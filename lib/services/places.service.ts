@@ -17,6 +17,13 @@ export const placesService = {
     api.get(`/places/${slug}`).then((r) => r.data),
 
   // ── Admin (require Bearer token via Axios interceptor) ──
+  /** Fetch all places including drafts — for admin dashboard */
+  adminGetAll: (query: PlaceQuery = {}) =>
+    api.get('/admin/places', { params: query }).then((r) => r.data),
+
+  adminGetById: (id: string) =>
+    api.get(`/admin/places/${id}`).then((r) => r.data),
+
   // Do NOT set Content-Type manually — Axios sets multipart/form-data with boundary automatically
   create: (formData: FormData) =>
     api.post('/admin/places', formData).then((r) => r.data),

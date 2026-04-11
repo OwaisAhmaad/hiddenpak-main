@@ -72,6 +72,39 @@ export class BlogsPublicController {
 export class BlogsAdminController {
   constructor(private readonly blogsService: BlogsService) {}
 
+  @Get()
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles('admin')
+  @ApiOperation({ summary: 'List ALL blogs including drafts (admin)' })
+  @ApiQuery({ name: 'page',     required: false, example: 1 })
+  @ApiQuery({ name: 'limit',    required: false, example: 10 })
+  @ApiQuery({ name: 'search',   required: false, example: 'hunza' })
+  @ApiQuery({ name: 'category', required: false, example: 'trekking' })
+  @ApiQuery({ name: 'status',   required: false, enum: ['draft', 'published'] })
+  @ApiResponse({ status: 200, description: 'All blogs with pagination', schema: { example: { success: true, data: [{ _id: '…', title: '…', published: false }], meta: { total: 42, page: 1, limit: 10, pages: 5 } } } })
+  @ApiResponse({ status: 401, description: 'Unauthorized' })
+  adminGetAll(
+    @Query('page')     page?: string,
+    @Query('limit')    limit?: string,
+    @Query('search')   search?: string,
+    @Query('category') category?: string,
+    @Query('status')   status?: string,
+  ) {
+    return this.blogsService.getAll({ page, limit, search, category, status });
+  }
+
+  @Get(':id')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles('admin')
+  @ApiOperation({ summary: 'Get single blog by ID or slug (admin)' })
+  @ApiParam({ name: 'id', description: 'Blog slug or MongoDB ObjectId' })
+  @ApiResponse({ status: 200, description: 'Blog found' })
+  @ApiResponse({ status: 404, description: 'Blog not found' })
+  @ApiResponse({ status: 401, description: 'Unauthorized' })
+  adminGetOne(@Param('id') id: string) {
+    return this.blogsService.getBySlug(id);
+  }
+
   @Post()
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles('admin')

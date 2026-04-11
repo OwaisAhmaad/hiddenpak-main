@@ -16,8 +16,9 @@ import { galleryService } from "@/lib/services/gallery.service";
 
 interface GalleryImage {
   id: string;
-  src: string;
-  alt: string;
+  imageUrl: string;
+  alt?: string;
+  caption?: string;
   location: string;
   height?: string;
 }
@@ -46,7 +47,7 @@ export default function AdminGalleryPage() {
     setLoading(true);
     setError("");
     try {
-      const data = await galleryService.getAll();
+      const data = await galleryService.adminGetAll();
       setImages(Array.isArray(data) ? data : data?.data ?? []);
     } catch {
       setError("Failed to load gallery. Displaying mock data.");
@@ -281,8 +282,8 @@ export default function AdminGalleryPage() {
                   }`}
                 >
                   <NextImage
-                    src={img.src}
-                    alt={img.alt}
+                    src={img.imageUrl}
+                    alt={img.alt ?? img.caption ?? 'Gallery image'}
                     fill
                     className="object-cover transition-transform duration-500 group-hover:scale-110"
                     sizes="(max-width: 768px) 50vw, 25vw"

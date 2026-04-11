@@ -64,7 +64,7 @@ export default function AdminBlogsPage() {
     setLoadingList(true);
     setListError("");
     try {
-      const res = await blogsService.getAll({ search, category: categoryFilter });
+      const res = await blogsService.adminGetAll({ search, category: categoryFilter });
       setBlogs(res.data ?? []);
     } catch {
       setListError("Failed to load blog posts.");

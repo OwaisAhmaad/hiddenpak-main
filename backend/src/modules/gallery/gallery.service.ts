@@ -64,6 +64,22 @@ export class GalleryService {
     };
   }
 
+  async getById(id: string) {
+    const item = await this.repo.findById(id);
+    if (!item) throw new NotFoundException('Image not found');
+    return {
+      message: 'Image retrieved successfully',
+      data: {
+        id: (item as any)._id,
+        imageUrl: item.url,
+        caption: item.caption,
+        location: item.location,
+        height: item.height,
+        createdAt: (item as any).createdAt,
+      },
+    };
+  }
+
   async remove(id: string) {
     const item = await this.repo.findById(id);
     if (!item) throw new NotFoundException('Image not found');

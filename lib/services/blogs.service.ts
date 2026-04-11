@@ -49,6 +49,13 @@ export const blogsService = {
     api.get(`/blogs/${slug}`).then((r) => r.data),
 
   // ── Admin (require Bearer token via Axios interceptor) ──
+  /** Fetch all blogs including drafts — for admin dashboard */
+  adminGetAll: (query: BlogQuery = {}) =>
+    api.get('/admin/blogs', { params: query }).then((r) => r.data),
+
+  adminGetById: (id: string) =>
+    api.get(`/admin/blogs/${id}`).then((r) => r.data),
+
   create: (payload: CreateBlogPayload) =>
     api.post('/admin/blogs', toBlogFormData(payload)).then((r) => r.data),
 

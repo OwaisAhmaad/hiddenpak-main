@@ -72,6 +72,39 @@ export class PlacesPublicController {
 export class PlacesAdminController {
   constructor(private readonly placesService: PlacesService) {}
 
+  @Get()
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles('admin')
+  @ApiOperation({ summary: 'List ALL places including drafts (admin)' })
+  @ApiQuery({ name: 'page',     required: false, example: 1 })
+  @ApiQuery({ name: 'limit',    required: false, example: 12 })
+  @ApiQuery({ name: 'search',   required: false, example: 'hunza' })
+  @ApiQuery({ name: 'region',   required: false, example: 'Gilgit-Baltistan' })
+  @ApiQuery({ name: 'category', required: false, example: 'Mountain' })
+  @ApiResponse({ status: 200, description: 'All places with pagination', schema: { example: { success: true, data: [{ _id: '…', name: '…', region: '…', published: false }], meta: { total: 30, page: 1, limit: 12, pages: 3 } } } })
+  @ApiResponse({ status: 401, description: 'Unauthorized' })
+  adminGetAll(
+    @Query('page')     page?: string,
+    @Query('limit')    limit?: string,
+    @Query('search')   search?: string,
+    @Query('region')   region?: string,
+    @Query('category') category?: string,
+  ) {
+    return this.placesService.getAll({ page, limit, search, region, category });
+  }
+
+  @Get(':id')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles('admin')
+  @ApiOperation({ summary: 'Get single place by ID or slug (admin)' })
+  @ApiParam({ name: 'id', description: 'Place slug or MongoDB ObjectId' })
+  @ApiResponse({ status: 200, description: 'Place found' })
+  @ApiResponse({ status: 404, description: 'Place not found' })
+  @ApiResponse({ status: 401, description: 'Unauthorized' })
+  adminGetOne(@Param('id') id: string) {
+    return this.placesService.getBySlug(id);
+  }
+
   @Post()
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles('admin')

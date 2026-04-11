@@ -6,6 +6,13 @@ export const galleryService = {
     api.get('/gallery', { params: { page, limit } }).then((r) => r.data),
 
   // ── Admin (require Bearer token via Axios interceptor) ──
+  /** Fetch all gallery images — for admin dashboard */
+  adminGetAll: (page = 1, limit = 20) =>
+    api.get('/admin/gallery', { params: { page, limit } }).then((r) => r.data),
+
+  adminGetById: (id: string) =>
+    api.get(`/admin/gallery/${id}`).then((r) => r.data),
+
   // Do NOT set Content-Type manually — Axios sets multipart/form-data with boundary automatically
   upload: (
     file: File,

@@ -47,6 +47,15 @@ export class GalleryPublicController {
   ) {
     return this.galleryService.getAll({ page, limit });
   }
+
+  @Get(':id')
+  @ApiOperation({ summary: 'Get single gallery image by ID' })
+  @ApiParam({ name: 'id', description: 'Gallery item MongoDB ObjectId' })
+  @ApiResponse({ status: 200, description: 'Gallery image found' })
+  @ApiResponse({ status: 404, description: 'Image not found' })
+  getById(@Param('id') id: string) {
+    return this.galleryService.getById(id);
+  }
 }
 
 // ── Admin routes ────────────────────────────────────────────────
@@ -55,6 +64,33 @@ export class GalleryPublicController {
 @Controller('admin/gallery')
 export class GalleryAdminController {
   constructor(private readonly galleryService: GalleryService) {}
+
+  @Get()
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles('admin')
+  @ApiOperation({ summary: 'List ALL gallery images (admin)' })
+  @ApiQuery({ name: 'page',  required: false, example: 1 })
+  @ApiQuery({ name: 'limit', required: false, example: 20 })
+  @ApiResponse({ status: 200, description: 'Paginated gallery list', schema: { example: { success: true, data: [{ id: '…', imageUrl: '…', caption: '…', location: '…', height: 'tall' }], meta: { total: 142, page: 1, limit: 20 } } } })
+  @ApiResponse({ status: 401, description: 'Unauthorized' })
+  adminGetAll(
+    @Query('page')  page?: string,
+    @Query('limit') limit?: string,
+  ) {
+    return this.galleryService.getAll({ page, limit });
+  }
+
+  @Get(':id')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles('admin')
+  @ApiOperation({ summary: 'Get single gallery image by ID (admin)' })
+  @ApiParam({ name: 'id', description: 'Gallery item MongoDB ObjectId' })
+  @ApiResponse({ status: 200, description: 'Image found' })
+  @ApiResponse({ status: 404, description: 'Image not found' })
+  @ApiResponse({ status: 401, description: 'Unauthorized' })
+  adminGetById(@Param('id') id: string) {
+    return this.galleryService.getById(id);
+  }
 
   @Post()
   @UseGuards(JwtAuthGuard, RolesGuard)

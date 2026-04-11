@@ -18,7 +18,7 @@ import {
 import { placesService } from "@/lib/services/places.service";
 
 interface Place {
-  id: string;
+  _id: string;
   name: string;
   region: string;
   category: string;
@@ -85,7 +85,7 @@ export default function AdminPlacesPage() {
     setLoading(true);
     setError("");
     try {
-      const data = await placesService.getAll({
+      const data = await placesService.adminGetAll({
         search: search || undefined,
         region: regionFilter || undefined,
         category: categoryFilter || undefined,
@@ -159,7 +159,7 @@ export default function AdminPlacesPage() {
   async function handleDelete(id: string) {
     try {
       await placesService.remove(id);
-      setPlaces((prev) => prev.filter((p) => p.id !== id));
+      setPlaces((prev) => prev.filter((p) => p._id !== id));
     } catch {
       setError("Failed to delete place.");
     } finally {
@@ -279,7 +279,7 @@ export default function AdminPlacesPage() {
               </thead>
               <tbody className="divide-y divide-[#1F2937]/60">
                 {filtered.map((place) => (
-                  <tr key={place.id} className="group hover:bg-[#1a2235] transition-colors">
+                  <tr key={place._id} className="group hover:bg-[#1a2235] transition-colors">
                     {/* Image + Name */}
                     <td className="py-3 px-5">
                       <div className="flex items-center gap-3">
@@ -339,7 +339,7 @@ export default function AdminPlacesPage() {
                           <Pencil className="w-3.5 h-3.5" />
                         </button>
                         <button
-                          onClick={() => setDeleteConfirm(place.id)}
+                          onClick={() => setDeleteConfirm(place._id)}
                           className="p-1.5 bg-[#1F2937] hover:bg-red-500/20 text-[#6B7280] hover:text-red-400 rounded-lg transition-colors"
                         >
                           <Trash2 className="w-3.5 h-3.5" />
