@@ -1,89 +1,136 @@
 "use client";
 
-import { motion } from "framer-motion";
-import Link from "next/link";
-import { Mountain, Eye, EyeOff, Lock, Mail, ArrowLeft } from "lucide-react";
 import { useState } from "react";
+import { useRouter } from "next/navigation";
+import Link from "next/link";
+import {
+  Compass,
+  Eye,
+  EyeOff,
+  Lock,
+  Mail,
+  ArrowLeft,
+  AlertCircle,
+} from "lucide-react";
+import { authService } from "@/lib/services/auth.service";
 
 export default function AdminLoginPage() {
+  const router = useRouter();
   const [showPassword, setShowPassword] = useState(false);
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
+
+  async function handleSubmit(e: React.FormEvent) {
+    e.preventDefault();
+    setError("");
+    setLoading(true);
+    try {
+      await authService.login(email, password);
+      router.push("/admin/dashboard");
+    } catch (err: any) {
+      const msg =
+        err?.response?.data?.message ?? "Invalid email or password";
+      setError(msg);
+    } finally {
+      setLoading(false);
+    }
+  }
 
   return (
-    <div className="min-h-screen bg-gray-950 flex items-center justify-center px-4 relative overflow-hidden">
-      {/* BG Pattern */}
-      <div className="absolute inset-0 opacity-5">
+    <div className="min-h-screen bg-[#0B0F19] flex items-center justify-center px-4 relative overflow-hidden">
+      {/* Background radial gradient */}
+      <div className="absolute inset-0 pointer-events-none">
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[800px] bg-[#14532D]/10 rounded-full blur-3xl" />
+        <div className="absolute top-1/4 right-1/4 w-[400px] h-[400px] bg-[#F97316]/5 rounded-full blur-3xl" />
+        {/* Subtle grid */}
         <div
-          className="absolute inset-0 bg-cover bg-center"
+          className="absolute inset-0 opacity-[0.03]"
           style={{
             backgroundImage:
-              "url('https://images.unsplash.com/photo-1605640840605-14ac1855827b?w=1400&q=80')",
+              "linear-gradient(#F5F5DC 1px, transparent 1px), linear-gradient(90deg, #F5F5DC 1px, transparent 1px)",
+            backgroundSize: "40px 40px",
           }}
         />
       </div>
-      <div className="absolute inset-0 bg-gradient-to-br from-emerald-950/50 via-gray-950 to-gray-950" />
 
-      {/* Back Link */}
+      {/* Back to site */}
       <Link
         href="/"
-        className="absolute top-6 left-6 flex items-center gap-2 text-gray-400 hover:text-white transition-colors text-sm"
+        className="absolute top-6 left-6 flex items-center gap-2 text-[#6B7280] hover:text-white transition-colors text-sm"
       >
         <ArrowLeft className="w-4 h-4" />
         Back to site
       </Link>
 
       {/* Card */}
-      <motion.div
-        initial={{ opacity: 0, y: 30 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.6 }}
-        className="relative z-10 w-full max-w-md"
-      >
+      <div className="relative z-10 w-full max-w-md">
         {/* Logo */}
         <div className="text-center mb-8">
-          <div className="inline-flex items-center justify-center w-14 h-14 bg-emerald-600 rounded-2xl mb-4">
-            <Mountain className="w-7 h-7 text-white" />
+          <div className="inline-flex items-center justify-center gap-2 mb-4">
+            <div className="w-12 h-12 bg-[#14532D] rounded-2xl flex items-center justify-center">
+              <Compass className="w-6 h-6 text-white" />
+            </div>
+            <div className="w-10 h-10 bg-[#1F2937] border border-[#374151] rounded-xl flex items-center justify-center">
+              <Lock className="w-5 h-5 text-[#F97316]" />
+            </div>
           </div>
-          <h1 className="text-2xl font-bold text-white font-heading">
-            Admin Portal
+          <h1 className="text-2xl font-bold text-white mb-1">
+            <span className="text-white">Hidden</span>
+            <span className="text-[#F97316]">Pak</span>
           </h1>
-          <p className="text-gray-400 text-sm mt-1">HiddenPak Content Management</p>
+          <p className="text-[#6B7280] text-sm">Admin Portal</p>
         </div>
 
-        <div className="bg-gray-900 border border-gray-800 rounded-2xl p-8">
-          <h2 className="text-xl font-bold text-white font-heading mb-6">
-            Sign In
-          </h2>
+        <div className="bg-[#111827] border border-[#1F2937] rounded-2xl p-8">
+          <h2 className="text-xl font-bold text-white mb-6">Sign In</h2>
 
-          <form className="space-y-5">
+          {error && (
+            <div className="flex items-center gap-3 bg-red-500/10 border border-red-500/20 text-red-400 text-sm px-4 py-3 rounded-xl mb-5">
+              <AlertCircle className="w-4 h-4 flex-shrink-0" />
+              {error}
+            </div>
+          )}
+
+          <form onSubmit={handleSubmit} className="space-y-5">
+            {/* Email */}
             <div>
-              <label className="block text-sm font-medium text-gray-300 mb-2">
+              <label className="block text-sm font-medium text-[#F5F5DC] mb-2">
                 Email Address
               </label>
               <div className="relative">
-                <Mail className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-500" />
+                <Mail className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-[#6B7280]" />
                 <input
                   type="email"
+                  required
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
                   placeholder="admin@hiddenpak.com"
-                  className="w-full pl-11 pr-4 py-3 bg-gray-800 border border-gray-700 rounded-xl text-white placeholder-gray-500 text-sm focus:outline-none focus:border-emerald-500 transition-colors"
+                  className="w-full pl-11 pr-4 py-3 bg-[#1F2937] border border-[#374151] rounded-xl text-white placeholder-[#6B7280] text-sm focus:outline-none focus:border-[#14532D] transition-colors"
                 />
               </div>
             </div>
 
+            {/* Password */}
             <div>
-              <label className="block text-sm font-medium text-gray-300 mb-2">
+              <label className="block text-sm font-medium text-[#F5F5DC] mb-2">
                 Password
               </label>
               <div className="relative">
-                <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-500" />
+                <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-[#6B7280]" />
                 <input
                   type={showPassword ? "text" : "password"}
+                  required
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
                   placeholder="••••••••"
-                  className="w-full pl-11 pr-11 py-3 bg-gray-800 border border-gray-700 rounded-xl text-white placeholder-gray-500 text-sm focus:outline-none focus:border-emerald-500 transition-colors"
+                  className="w-full pl-11 pr-11 py-3 bg-[#1F2937] border border-[#374151] rounded-xl text-white placeholder-[#6B7280] text-sm focus:outline-none focus:border-[#14532D] transition-colors"
                 />
                 <button
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-300 transition-colors"
+                  className="absolute right-4 top-1/2 -translate-y-1/2 text-[#6B7280] hover:text-[#F5F5DC] transition-colors"
                 >
                   {showPassword ? (
                     <EyeOff className="w-4 h-4" />
@@ -94,35 +141,28 @@ export default function AdminLoginPage() {
               </div>
             </div>
 
-            <div className="flex items-center justify-between">
-              <label className="flex items-center gap-2 cursor-pointer">
-                <input
-                  type="checkbox"
-                  className="w-4 h-4 rounded border-gray-600 bg-gray-800 accent-emerald-600"
-                />
-                <span className="text-sm text-gray-400">Remember me</span>
-              </label>
-              <button
-                type="button"
-                className="text-sm text-emerald-400 hover:text-emerald-300 transition-colors"
-              >
-                Forgot password?
-              </button>
-            </div>
-
-            <Link
-              href="/admin/dashboard"
-              className="block w-full text-center bg-emerald-600 hover:bg-emerald-700 text-white font-semibold py-3 rounded-xl transition-colors"
+            {/* Submit */}
+            <button
+              type="submit"
+              disabled={loading}
+              className="w-full bg-[#F97316] hover:bg-[#EA6D0E] disabled:opacity-60 disabled:cursor-not-allowed text-white font-semibold py-3 rounded-xl transition-colors flex items-center justify-center gap-2"
             >
-              Sign In
-            </Link>
+              {loading ? (
+                <>
+                  <span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                  Signing in...
+                </>
+              ) : (
+                "Sign In"
+              )}
+            </button>
           </form>
         </div>
 
-        <p className="text-center text-gray-600 text-xs mt-6">
+        <p className="text-center text-[#6B7280] text-xs mt-6">
           &copy; {new Date().getFullYear()} HiddenPak. Admin access only.
         </p>
-      </motion.div>
+      </div>
     </div>
   );
 }

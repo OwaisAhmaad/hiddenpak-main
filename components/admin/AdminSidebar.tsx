@@ -1,110 +1,122 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import {
-  Mountain,
   LayoutDashboard,
-  BookOpen,
+  FileText,
   MapPin,
   Image,
-  LogOut,
+  BarChart3,
   Settings,
-  Bell,
-  ChevronRight,
+  User,
+  LogOut,
+  Compass,
 } from "lucide-react";
+import { authService } from "@/lib/services/auth.service";
 
-const navItems = [
-  { href: "/admin/dashboard", icon: LayoutDashboard, label: "Dashboard" },
-  { href: "/admin/blogs", icon: BookOpen, label: "Blogs" },
-  { href: "/admin/places", icon: MapPin, label: "Places" },
-  { href: "/admin/gallery", icon: Image, label: "Gallery" },
+const navSections = [
+  {
+    section: "MAIN",
+    items: [
+      { label: "Dashboard", href: "/admin/dashboard", icon: LayoutDashboard },
+      { label: "Analytics", href: "/admin/analytics", icon: BarChart3 },
+    ],
+  },
+  {
+    section: "CONTENT",
+    items: [
+      { label: "Blog Posts", href: "/admin/blogs", icon: FileText },
+      { label: "Places", href: "/admin/places", icon: MapPin },
+      { label: "Gallery", href: "/admin/gallery", icon: Image },
+    ],
+  },
+  {
+    section: "SETTINGS",
+    items: [
+      { label: "Settings", href: "/admin/settings", icon: Settings },
+      { label: "Admin Profile", href: "/admin/profile", icon: User },
+    ],
+  },
 ];
 
 export default function AdminSidebar() {
   const pathname = usePathname();
+  const router = useRouter();
+
+  function handleLogout() {
+    authService.logout();
+    router.push("/admin/login");
+  }
 
   return (
-    <aside className="w-64 bg-gray-950 border-r border-gray-800 flex flex-col h-screen sticky top-0">
+    <aside className="w-64 flex flex-col h-screen sticky top-0 bg-[#111827] border-r border-[#1F2937]">
       {/* Logo */}
-      <div className="px-6 py-5 border-b border-gray-800">
-        <Link href="/admin/dashboard" className="flex items-center gap-2.5">
-          <div className="w-9 h-9 bg-emerald-600 rounded-xl flex items-center justify-center">
-            <Mountain className="w-5 h-5 text-white" />
+      <div className="px-6 py-5 border-b border-[#1F2937]">
+        <Link href="/admin/dashboard" className="flex items-center gap-3">
+          <div className="w-9 h-9 bg-[#14532D] rounded-xl flex items-center justify-center flex-shrink-0">
+            <Compass className="w-5 h-5 text-white" />
           </div>
-          <div>
-            <span className="text-white font-bold text-sm font-heading">
-              HiddenPak
-            </span>
-            <p className="text-gray-500 text-xs">Admin Panel</p>
-          </div>
+          <span className="font-bold text-base tracking-tight">
+            <span className="text-white">Hidden</span>
+            <span className="text-[#F97316]">Pak</span>
+          </span>
         </Link>
       </div>
 
-      {/* Nav */}
-      <nav className="flex-1 px-4 py-6 overflow-y-auto">
-        <p className="text-xs font-semibold text-gray-600 uppercase tracking-wider mb-3 px-2">
-          Main Menu
-        </p>
-        <div className="space-y-1">
-          {navItems.map(({ href, icon: Icon, label }) => {
-            const isActive = pathname === href;
-            return (
-              <Link
-                key={href}
-                href={href}
-                className={`flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all duration-200 group ${
-                  isActive
-                    ? "bg-emerald-600 text-white"
-                    : "text-gray-400 hover:text-white hover:bg-gray-800"
-                }`}
-              >
-                <Icon className="w-4 h-4 flex-shrink-0" />
-                <span className="flex-1">{label}</span>
-                {isActive && <ChevronRight className="w-3.5 h-3.5" />}
-              </Link>
-            );
-          })}
-        </div>
-
-        <div className="mt-8">
-          <p className="text-xs font-semibold text-gray-600 uppercase tracking-wider mb-3 px-2">
-            System
-          </p>
-          <div className="space-y-1">
-            <button className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium text-gray-400 hover:text-white hover:bg-gray-800 transition-all duration-200">
-              <Bell className="w-4 h-4" />
-              Notifications
-              <span className="ml-auto bg-emerald-600 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center">
-                3
-              </span>
-            </button>
-            <button className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium text-gray-400 hover:text-white hover:bg-gray-800 transition-all duration-200">
-              <Settings className="w-4 h-4" />
-              Settings
-            </button>
+      {/* Navigation */}
+      <nav className="flex-1 px-3 py-5 overflow-y-auto space-y-6">
+        {navSections.map(({ section, items }) => (
+          <div key={section}>
+            <p className="text-[10px] font-semibold text-[#6B7280] uppercase tracking-widest mb-2 px-3">
+              {section}
+            </p>
+            <div className="space-y-0.5">
+              {items.map(({ label, href, icon: Icon }) => {
+                const isActive = pathname === href || pathname.startsWith(href + "/");
+                return (
+                  <Link
+                    key={href}
+                    href={href}
+                    className={`relative flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all duration-200 ${
+                      isActive
+                        ? "bg-[#14532D]/20 text-white border-l-2 border-[#F97316] pl-[10px]"
+                        : "text-[#F5F5DC]/70 hover:text-white hover:bg-[#1F2937] border-l-2 border-transparent pl-[10px]"
+                    }`}
+                  >
+                    <Icon className="w-4 h-4 flex-shrink-0" />
+                    <span>{label}</span>
+                  </Link>
+                );
+              })}
+            </div>
           </div>
-        </div>
+        ))}
       </nav>
 
-      {/* User */}
-      <div className="px-4 py-4 border-t border-gray-800">
-        <div className="flex items-center gap-3 px-3 py-2.5">
-          <div className="w-9 h-9 bg-gradient-to-br from-emerald-500 to-emerald-700 rounded-xl flex items-center justify-center text-white font-bold text-sm">
+      {/* User Info + Logout */}
+      <div className="px-3 py-4 border-t border-[#1F2937]">
+        <div className="flex items-center gap-3 px-3 py-2.5 mb-1">
+          <div className="w-9 h-9 bg-[#14532D] rounded-xl flex items-center justify-center text-white font-bold text-sm flex-shrink-0">
             A
           </div>
           <div className="flex-1 min-w-0">
-            <p className="text-white text-sm font-medium truncate">Admin User</p>
-            <p className="text-gray-500 text-xs truncate">admin@hiddenpak.com</p>
+            <div className="flex items-center gap-2">
+              <p className="text-white text-sm font-medium truncate">Admin</p>
+              <span className="text-[10px] font-semibold bg-[#F97316]/20 text-[#F97316] px-1.5 py-0.5 rounded-md">
+                Admin
+              </span>
+            </div>
+            <p className="text-[#6B7280] text-xs truncate">admin@hiddenpak.com</p>
           </div>
         </div>
-        <Link
-          href="/admin/login"
-          className="w-full mt-2 flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium text-gray-400 hover:text-red-400 hover:bg-gray-800 transition-all duration-200"
+        <button
+          onClick={handleLogout}
+          className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium text-[#6B7280] hover:text-red-400 hover:bg-[#1F2937] transition-all duration-200 border-l-2 border-transparent"
         >
-          <LogOut className="w-4 h-4" />
-          Sign Out
-        </Link>
+          <LogOut className="w-4 h-4 flex-shrink-0" />
+          <span>Sign Out</span>
+        </button>
       </div>
     </aside>
   );
