@@ -17,6 +17,7 @@ const categories_module_1 = require("./modules/categories/categories.module");
 const gallery_module_1 = require("./modules/gallery/gallery.module");
 const places_module_1 = require("./modules/places/places.module");
 const users_module_1 = require("./modules/users/users.module");
+const analytics_module_1 = require("./modules/analytics/analytics.module");
 let AppModule = class AppModule {
 };
 exports.AppModule = AppModule;
@@ -27,7 +28,7 @@ exports.AppModule = AppModule = __decorate([
             mongoose_1.MongooseModule.forRootAsync({
                 inject: [config_1.ConfigService],
                 useFactory: (config) => ({
-                    uri: config.get('MONGO_URI'),
+                    uri: config.get('MONGO_URI') || config.get('MONGODB_URI'),
                 }),
             }),
             admin_module_1.AdminModule,
@@ -37,6 +38,7 @@ exports.AppModule = AppModule = __decorate([
             places_module_1.PlacesModule,
             gallery_module_1.GalleryModule,
             categories_module_1.CategoriesModule,
+            analytics_module_1.AnalyticsModule,
         ],
     })
 ], AppModule);

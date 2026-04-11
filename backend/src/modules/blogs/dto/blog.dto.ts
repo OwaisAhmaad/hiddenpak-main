@@ -16,7 +16,7 @@ export class CreateBlogDto {
   excerpt: string;
 
   @IsString()
-  @MinLength(10)
+  @MinLength(1)
   content: string;
 
   @IsOptional()
@@ -61,7 +61,7 @@ export class UpdateBlogDto {
 
   @IsOptional()
   @IsString()
-  @MinLength(10)
+  @MinLength(1)
   content?: string;
 
   @IsOptional()

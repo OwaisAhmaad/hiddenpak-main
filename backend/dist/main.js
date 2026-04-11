@@ -16,6 +16,7 @@ async function bootstrap() {
         whitelist: true,
         forbidNonWhitelisted: true,
         transform: true,
+        transformOptions: { enableImplicitConversion: true },
     }));
     app.useGlobalInterceptors(new response_interceptor_1.ResponseInterceptor());
     app.useGlobalFilters(new http_exception_filter_1.AllExceptionsFilter());

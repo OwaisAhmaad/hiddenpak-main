@@ -29,7 +29,15 @@
       "Bash(head -50 app/\\\\\\(admin\\\\\\)/admin/dashboard/page.tsx)",
       "Bash(head -50 app/\\\\\\(admin\\\\\\)/admin/login/page.tsx)",
       "Bash(npx next:*)",
-      "Bash(node -e \":*)"
+      "Bash(node -e \":*)",
+      "Bash(npx nest:*)",
+      "Bash(pkill -f \"node dist/main\")",
+      "Bash(node dist/main.js)",
+      "Bash(echo \"started pid $!\")",
+      "Bash(curl -s http://localhost:4000/api/v1/categories)",
+      "Bash(netstat -ano)",
+      "Bash(taskkill /PID 20612 /F)",
+      "Bash(cmd /c \"taskkill /PID 20612 /F\")"
     ]
   }
 }

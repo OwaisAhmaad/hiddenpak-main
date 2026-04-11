@@ -49,7 +49,8 @@ let AdminService = class AdminService {
             update.password = await bcrypt.hash(dto.newPassword, 12);
         }
         if (Object.keys(update).length === 0) {
-            return { message: 'No changes made', data: user };
+            const { password, refreshToken, ...safe } = user.toObject();
+            return { message: 'No changes made', data: safe };
         }
         const updated = await this.usersService.updateById(userId, update);
         const { password, refreshToken, ...safe } = updated.toObject();

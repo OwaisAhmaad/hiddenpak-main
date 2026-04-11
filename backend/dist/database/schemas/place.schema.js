@@ -39,7 +39,7 @@ __decorate([
     __metadata("design:type", String)
 ], Place.prototype, "longDescription", void 0);
 __decorate([
-    (0, mongoose_1.Prop)({ required: true }),
+    (0, mongoose_1.Prop)({ default: '' }),
     __metadata("design:type", String)
 ], Place.prototype, "image", void 0);
 __decorate([
