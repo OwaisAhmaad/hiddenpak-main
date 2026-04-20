@@ -1,25 +1,22 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { db } from '@/lib/db';
+import { api } from '@/lib/api';
 
 export async function GET() {
-  try {
-    const places = await db.place.findMany({
-      orderBy: { createdAt: 'desc' },
-    });
-    return NextResponse.json({ success: true, data: places });
-  } catch (error) {
-    return NextResponse.json(
-      { success: false, message: 'Failed to fetch places' },
-      { status: 500 }
-    );
+  const result = await api.get('/places');
+  if (!result.success) {
+    return NextResponse.json(result, { status: 500 });
   }
+  return NextResponse.json(result);
 }
 
 export async function POST(req: NextRequest) {
   try {
     const data = await req.json();
-    const place = await db.place.create({ data });
-    return NextResponse.json({ success: true, data: place }, { status: 201 });
+    const result = await api.post('/places', data);
+    if (!result.success) {
+      return NextResponse.json(result, { status: 500 });
+    }
+    return NextResponse.json(result, { status: 201 });
   } catch (error) {
     return NextResponse.json(
       { success: false, message: 'Failed to create place' },

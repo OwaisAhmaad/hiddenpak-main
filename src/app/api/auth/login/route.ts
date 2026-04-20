@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { db } from '@/lib/db';
+import { api } from '@/lib/api';
 
 export async function POST(req: NextRequest) {
   try {
@@ -12,24 +12,14 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    const admin = await db.admin.findUnique({ where: { email } });
+    // Forward to backend API
+    const result = await api.post('/auth/login', { email, password });
 
-    if (!admin || admin.password !== password) {
-      return NextResponse.json(
-        { success: false, message: 'Invalid email or password' },
-        { status: 401 }
-      );
+    if (!result.success) {
+      return NextResponse.json(result, { status: 401 });
     }
 
-    return NextResponse.json({
-      success: true,
-      admin: {
-        id: admin.id,
-        email: admin.email,
-        name: admin.name,
-        role: admin.role,
-      },
-    });
+    return NextResponse.json(result);
   } catch (error) {
     return NextResponse.json(
       { success: false, message: 'Internal server error' },

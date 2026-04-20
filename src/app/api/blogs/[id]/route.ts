@@ -1,26 +1,16 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { db } from '@/lib/db';
+import { api } from '@/lib/api';
 
 export async function GET(
   _req: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
-  try {
-    const { id } = await params;
-    const blog = await db.blog.findUnique({ where: { id } });
-    if (!blog) {
-      return NextResponse.json(
-        { success: false, message: 'Blog not found' },
-        { status: 404 }
-      );
-    }
-    return NextResponse.json({ success: true, data: blog });
-  } catch (error) {
-    return NextResponse.json(
-      { success: false, message: 'Failed to fetch blog' },
-      { status: 500 }
-    );
+  const { id } = await params;
+  const result = await api.get(`/blogs/${id}`);
+  if (!result.success) {
+    return NextResponse.json(result, { status: 404 });
   }
+  return NextResponse.json(result);
 }
 
 export async function PUT(
@@ -30,8 +20,11 @@ export async function PUT(
   try {
     const { id } = await params;
     const data = await req.json();
-    const blog = await db.blog.update({ where: { id }, data });
-    return NextResponse.json({ success: true, data: blog });
+    const result = await api.put(`/blogs/${id}`, data);
+    if (!result.success) {
+      return NextResponse.json(result, { status: 500 });
+    }
+    return NextResponse.json(result);
   } catch (error) {
     return NextResponse.json(
       { success: false, message: 'Failed to update blog' },
@@ -44,14 +37,10 @@ export async function DELETE(
   _req: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
-  try {
-    const { id } = await params;
-    await db.blog.delete({ where: { id } });
-    return NextResponse.json({ success: true });
-  } catch (error) {
-    return NextResponse.json(
-      { success: false, message: 'Failed to delete blog' },
-      { status: 500 }
-    );
+  const { id } = await params;
+  const result = await api.delete(`/blogs/${id}`);
+  if (!result.success) {
+    return NextResponse.json(result, { status: 500 });
   }
+  return NextResponse.json(result);
 }

@@ -1,0 +1,68 @@
+/**
+ * API Helper - Proxies requests to the HiddenPak Backend API
+ * 
+ * The frontend no longer connects to any database directly.
+ * All data operations go through the Express.js + MongoDB backend API.
+ * 
+ * Set NEXT_PUBLIC_API_URL in .env.local to point to your backend API.
+ * Default: http://localhost:5000/api
+ */
+
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api';
+
+interface ApiResponse<T = any> {
+  success: boolean;
+  data?: T;
+  message?: string;
+}
+
+async function apiRequest<T = any>(
+  path: string,
+  options: RequestInit = {}
+): Promise<ApiResponse<T>> {
+  try {
+    const url = `${API_BASE_URL}${path}`;
+    const headers: Record<string, string> = {
+      'Content-Type': 'application/json',
+      ...(options.headers as Record<string, string> || {}),
+    };
+
+    // Forward authorization header if present
+    const authHeader = options.headers instanceof Headers 
+      ? options.headers.get('Authorization')
+      : (options.headers as Record<string, string>)?.['Authorization'];
+    if (authHeader) {
+      headers['Authorization'] = authHeader;
+    }
+
+    const res = await fetch(url, {
+      ...options,
+      headers,
+    });
+
+    const data = await res.json();
+    return data;
+  } catch (error) {
+    console.error(`API request failed for ${path}:`, error);
+    return { success: false, message: 'Failed to connect to the API server. Make sure the backend is running.' };
+  }
+}
+
+export const api = {
+  get: <T = any>(path: string, headers?: Record<string, string>) =>
+    apiRequest<T>(path, { method: 'GET', headers }),
+
+  post: <T = any>(path: string, body?: any, headers?: Record<string, string>) =>
+    apiRequest<T>(path, { method: 'POST', body: JSON.stringify(body), headers }),
+
+  put: <T = any>(path: string, body?: any, headers?: Record<string, string>) =>
+    apiRequest<T>(path, { method: 'PUT', body: JSON.stringify(body), headers }),
+
+  patch: <T = any>(path: string, body?: any, headers?: Record<string, string>) =>
+    apiRequest<T>(path, { method: 'PATCH', body: JSON.stringify(body), headers }),
+
+  delete: <T = any>(path: string, headers?: Record<string, string>) =>
+    apiRequest<T>(path, { method: 'DELETE', headers }),
+};
+
+export { API_BASE_URL };

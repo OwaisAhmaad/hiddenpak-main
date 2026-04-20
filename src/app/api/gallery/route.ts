@@ -1,25 +1,22 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { db } from '@/lib/db';
+import { api } from '@/lib/api';
 
 export async function GET() {
-  try {
-    const images = await db.galleryImage.findMany({
-      orderBy: { createdAt: 'desc' },
-    });
-    return NextResponse.json({ success: true, data: images });
-  } catch (error) {
-    return NextResponse.json(
-      { success: false, message: 'Failed to fetch gallery images' },
-      { status: 500 }
-    );
+  const result = await api.get('/gallery');
+  if (!result.success) {
+    return NextResponse.json(result, { status: 500 });
   }
+  return NextResponse.json(result);
 }
 
 export async function POST(req: NextRequest) {
   try {
     const data = await req.json();
-    const image = await db.galleryImage.create({ data });
-    return NextResponse.json({ success: true, data: image }, { status: 201 });
+    const result = await api.post('/gallery', data);
+    if (!result.success) {
+      return NextResponse.json(result, { status: 500 });
+    }
+    return NextResponse.json(result, { status: 201 });
   } catch (error) {
     return NextResponse.json(
       { success: false, message: 'Failed to create gallery image' },

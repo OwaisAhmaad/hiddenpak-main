@@ -1,34 +1,22 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { db } from '@/lib/db';
+import { api } from '@/lib/api';
 
 export async function GET() {
-  try {
-    let settings = await db.siteSetting.findFirst();
-    if (!settings) {
-      settings = await db.siteSetting.create({ data: {} });
-    }
-    return NextResponse.json({ success: true, data: settings });
-  } catch (error) {
-    return NextResponse.json(
-      { success: false, message: 'Failed to fetch settings' },
-      { status: 500 }
-    );
+  const result = await api.get('/settings');
+  if (!result.success) {
+    return NextResponse.json(result, { status: 500 });
   }
+  return NextResponse.json(result);
 }
 
 export async function PUT(req: NextRequest) {
   try {
     const data = await req.json();
-    let settings = await db.siteSetting.findFirst();
-    if (!settings) {
-      settings = await db.siteSetting.create({ data });
-    } else {
-      settings = await db.siteSetting.update({
-        where: { id: settings.id },
-        data,
-      });
+    const result = await api.put('/settings', data);
+    if (!result.success) {
+      return NextResponse.json(result, { status: 500 });
     }
-    return NextResponse.json({ success: true, data: settings });
+    return NextResponse.json(result);
   } catch (error) {
     return NextResponse.json(
       { success: false, message: 'Failed to update settings' },

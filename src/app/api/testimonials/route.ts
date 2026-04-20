@@ -1,16 +1,10 @@
 import { NextResponse } from 'next/server';
-import { db } from '@/lib/db';
+import { api } from '@/lib/api';
 
 export async function GET() {
-  try {
-    const testimonials = await db.testimonial.findMany({
-      orderBy: { createdAt: 'desc' },
-    });
-    return NextResponse.json({ success: true, data: testimonials });
-  } catch (error) {
-    return NextResponse.json(
-      { success: false, message: 'Failed to fetch testimonials' },
-      { status: 500 }
-    );
+  const result = await api.get('/testimonials');
+  if (!result.success) {
+    return NextResponse.json(result, { status: 500 });
   }
+  return NextResponse.json(result);
 }

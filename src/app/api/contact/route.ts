@@ -1,18 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { db } from '@/lib/db';
+import { api } from '@/lib/api';
 
 export async function GET() {
-  try {
-    const messages = await db.contactMessage.findMany({
-      orderBy: { createdAt: 'desc' },
-    });
-    return NextResponse.json({ success: true, data: messages });
-  } catch (error) {
-    return NextResponse.json(
-      { success: false, message: 'Failed to fetch contact messages' },
-      { status: 500 }
-    );
+  const result = await api.get('/contact');
+  if (!result.success) {
+    return NextResponse.json(result, { status: 500 });
   }
+  return NextResponse.json(result);
 }
 
 export async function POST(req: NextRequest) {
@@ -61,19 +55,19 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    const contactMessage = await db.contactMessage.create({
-      data: {
-        name: name.trim(),
-        email: email.trim().toLowerCase(),
-        subject: subject.trim(),
-        message: message.trim(),
-      },
+    // Forward to backend API
+    const result = await api.post('/contact', {
+      name: name.trim(),
+      email: email.trim().toLowerCase(),
+      subject: subject.trim(),
+      message: message.trim(),
     });
 
-    return NextResponse.json(
-      { success: true, data: contactMessage, message: 'Message sent successfully!' },
-      { status: 201 }
-    );
+    if (!result.success) {
+      return NextResponse.json(result, { status: 500 });
+    }
+
+    return NextResponse.json(result, { status: 201 });
   } catch (error) {
     console.error('Contact form error:', error);
     return NextResponse.json(
