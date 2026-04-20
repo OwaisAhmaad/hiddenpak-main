@@ -36,7 +36,6 @@ yarn-error.log*
 # vercel
 .vercel
 
-
 # typescript
 *.tsbuildinfo
 next-env.d.ts
@@ -46,9 +45,38 @@ local-*
 *.log
 dev.log
 dev.out.log
+server.log
+
+# Sandbox/AI agent files
 test
 prompt
-
-server.log
-# Skills directory
 /skills/
+.zscripts/
+worklog.md
+
+# MongoDB local data
+/mongodb-data/
+
+# Database files
+/db/
+
+# Upload folder (user uploaded images, not project assets)
+/upload/
+
+# Download folder
+/download/
+
+# Examples folder
+/examples/
+
+# Caddy config (server-specific)
+Caddyfile
+
+# Prisma (project uses MongoDB/Mongoose, not Prisma)
+/prisma/
+
+# Lock files (project uses npm, not bun)
+bun.lock
+
+# AI/agent generated files
+agent-ctx/
