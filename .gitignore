@@ -80,3 +80,5 @@ bun.lock
 
 # AI/agent generated files
 agent-ctx/
+/mini-services/
+/scripts/
