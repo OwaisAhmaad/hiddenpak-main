@@ -1,13 +1,14 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { db } from '@/lib/db';
+
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
 
 export async function GET() {
   try {
-    const blogs = await db.blog.findMany({
-      orderBy: { createdAt: 'desc' },
-    });
-    return NextResponse.json({ success: true, data: blogs });
+    const response = await fetch(`${API_BASE_URL}/api/blogs`);
+    const data = await response.json();
+    return NextResponse.json(data);
   } catch (error) {
+    console.error('Error fetching blogs:', error);
     return NextResponse.json(
       { success: false, message: 'Failed to fetch blogs' },
       { status: 500 }
@@ -17,10 +18,16 @@ export async function GET() {
 
 export async function POST(req: NextRequest) {
   try {
-    const data = await req.json();
-    const blog = await db.blog.create({ data });
-    return NextResponse.json({ success: true, data: blog }, { status: 201 });
+    const body = await req.json();
+    const response = await fetch(`${API_BASE_URL}/api/blogs`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(body),
+    });
+    const data = await response.json();
+    return NextResponse.json(data, { status: response.status });
   } catch (error) {
+    console.error('Error creating blog:', error);
     return NextResponse.json(
       { success: false, message: 'Failed to create blog' },
       { status: 500 }

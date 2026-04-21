@@ -224,11 +224,11 @@ function PublicSite({
       <header className="sticky top-0 z-50 bg-white/95 backdrop-blur-md border-b border-gray-100 shadow-sm">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between h-16">
-            <button onClick={() => navigate('home')} className="flex items-center gap-2">
-              <div className="w-9 h-9 bg-[#14532D] rounded-xl flex items-center justify-center">
-                <Compass className="w-5 h-5 text-white" />
+            <button onClick={() => navigate('home')} className="flex items-center gap-2 hover:scale-105 transition-transform">
+              <div className="w-10 h-10 flex items-center justify-center">
+                <img src="/hiddenpak-logo.svg" alt="HiddenPak" className="w-full h-full" />
               </div>
-              <span className="font-bold text-lg tracking-tight">
+              <span className="font-bold text-lg tracking-tight hidden sm:inline">
                 <span className="text-[#14532D]">Hidden</span>
                 <span className="text-[#F97316]">Pak</span>
               </span>
@@ -386,13 +386,26 @@ function HomePage({ navigate, places, blogs, galleryImages, testimonials, setSel
   return (
     <div>
       {/* Hero */}
-      <section className="relative overflow-hidden bg-gradient-to-br from-[#0B0F19] via-[#111827] to-[#14532D]/30">
-        <div className="absolute inset-0 opacity-10" style={{ backgroundImage: 'radial-gradient(circle at 30% 50%, rgba(20,83,45,0.3), transparent 50%), radial-gradient(circle at 70% 30%, rgba(249,115,22,0.15), transparent 50%)' }} />
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16 sm:py-24 lg:py-32 relative">
+      <section className="relative overflow-hidden min-h-screen bg-cover bg-center" style={{ backgroundImage: 'url(https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=1600&q=80)' }}>
+        {/* Background Image Overlay */}
+        <div className="absolute inset-0 bg-gradient-to-r from-black/60 via-black/40 to-black/20" />
+        
+        {/* Woman Hiker Image - Stylish Overlay */}
+        <div className="absolute inset-0 hidden lg:flex items-end justify-end">
+          <img 
+            src="https://images.unsplash.com/photo-1491555103944-7c628ba54d3d?w=600&q=80" 
+            alt="Adventure Woman" 
+            className="h-full object-cover object-center drop-shadow-2xl"
+            style={{ width: '45%', clipPath: 'polygon(30% 0%, 100% 0%, 100% 100%, 0% 100%)' }}
+          />
+        </div>
+
+        {/* Content Container */}
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16 sm:py-24 lg:py-32 relative z-10 h-full flex flex-col justify-center">
           <div className="grid lg:grid-cols-2 gap-12 items-center">
-            <div>
+            <div className="max-w-2xl">
               <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }}>
-                <span className="inline-flex items-center gap-2 px-3 py-1 bg-[#14532D]/20 border border-[#14532D]/30 rounded-full text-emerald-400 text-xs font-semibold mb-6">
+                <span className="inline-flex items-center gap-2 px-3 py-1 bg-[#14532D]/30 backdrop-blur-sm border border-[#14532D]/50 rounded-full text-emerald-300 text-xs font-semibold mb-6">
                   <Globe className="w-3 h-3" />
                   Explorer & Travel
                 </span>
@@ -401,38 +414,20 @@ function HomePage({ navigate, places, blogs, galleryImages, testimonials, setSel
                 Explore Pakistan&apos;s{' '}
                 <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#F97316] to-emerald-400">Hidden Gems</span>
               </motion.h1>
-              <motion.p initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3 }} className="text-gray-400 text-lg leading-relaxed mb-8 max-w-lg">
+              <motion.p initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3 }} className="text-gray-200 text-lg leading-relaxed mb-8">
                 Discover the untouched wonders of nature, from majestic peaks to serene valleys. Immerse yourself in rich traditions, vibrant cultures, and timeless heritage.
               </motion.p>
               <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.4 }} className="flex flex-wrap gap-4">
-                <button onClick={() => navigate('places')} className="px-6 py-3 bg-[#F97316] hover:bg-[#EA6D0E] text-white font-semibold rounded-xl transition-colors flex items-center gap-2">
+                <button onClick={() => navigate('places')} className="px-6 py-3 bg-[#F97316] hover:bg-[#EA6D0E] text-white font-semibold rounded-xl transition-colors flex items-center gap-2 shadow-lg hover:shadow-xl">
                   Explore Places <ArrowRight className="w-4 h-4" />
                 </button>
-                <button onClick={() => navigate('blogs')} className="px-6 py-3 bg-white/10 hover:bg-white/20 text-white font-semibold rounded-xl transition-colors border border-white/20">
+                <button onClick={() => navigate('blogs')} className="px-6 py-3 bg-white/20 hover:bg-white/30 backdrop-blur-sm text-white font-semibold rounded-xl transition-colors border border-white/40">
                   Read Blogs
                 </button>
               </motion.div>
             </div>
-            <motion.div initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} transition={{ delay: 0.3 }} className="relative hidden lg:block">
-              <div className="relative rounded-3xl overflow-hidden aspect-[4/5] shadow-2xl shadow-black/30">
-                <img src="https://images.unsplash.com/photo-1605640840605-14ac1855827b?w=800&q=80" alt="Fairy Meadows" className="w-full h-full object-cover" />
-                <div className="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent" />
-                <div className="absolute bottom-6 left-6 right-6">
-                  <div className="bg-white/10 backdrop-blur-md rounded-2xl p-4 border border-white/20">
-                    <div className="flex items-center gap-4">
-                      <div className="flex items-center gap-2 text-white text-sm">
-                        <MapPin className="w-4 h-4 text-[#F97316]" />
-                        <span>Fairy Meadows</span>
-                      </div>
-                      <div className="flex items-center gap-2 text-white text-sm">
-                        <Calendar className="w-4 h-4 text-emerald-400" />
-                        <span>Best: May – Sep</span>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </motion.div>
+            {/* Empty column for desktop - image takes this space */}
+            <div className="hidden lg:block" />
           </div>
         </div>
       </section>
@@ -578,6 +573,60 @@ function HomePage({ navigate, places, blogs, galleryImages, testimonials, setSel
             <button onClick={() => navigate('gallery')} className="px-6 py-3 bg-[#14532D] hover:bg-[#14532D]/90 text-white font-semibold rounded-xl transition-colors flex items-center gap-2 mx-auto">
               View Full Gallery <ArrowRight className="w-4 h-4" />
             </button>
+          </div>
+        </div>
+      </section>
+
+      {/* Adventure CTA Section with Woman Hiker */}
+      <section className="py-16 sm:py-20 bg-gradient-to-br from-[#14532D] via-[#1a6e3d] to-[#0D3B20] relative overflow-hidden">
+        {/* Background Pattern */}
+        <div className="absolute inset-0 opacity-10" style={{ backgroundImage: 'radial-gradient(circle at 20% 50%, rgba(255,255,255,0.1), transparent 50%)' }} />
+        
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
+          <div className="grid lg:grid-cols-2 gap-8 items-center">
+            {/* Left Content */}
+            <motion.div 
+              initial={{ opacity: 0, x: -20 }}
+              whileInView={{ opacity: 1, x: 0 }}
+              transition={{ duration: 0.6 }}
+            >
+              <span className="inline-flex items-center gap-2 px-3 py-1 bg-white/10 border border-white/20 rounded-full text-emerald-300 text-xs font-semibold mb-4">
+                <Mountain className="w-3 h-3" />
+                Ready for Adventure?
+              </span>
+              <h2 className="text-3xl sm:text-4xl lg:text-5xl font-bold text-white mb-4 leading-tight">
+                Start Your Hidden Pakistan Journey Today
+              </h2>
+              <p className="text-white/80 text-lg leading-relaxed mb-6">
+                Join thousands of adventurers who've discovered Pakistan's most breathtaking hidden destinations. From alpine peaks to serene valleys, your next unforgettable experience awaits.
+              </p>
+              <div className="flex flex-wrap gap-3">
+                <button onClick={() => navigate('places')} className="px-6 py-3 bg-white hover:bg-gray-100 text-[#14532D] font-semibold rounded-xl transition-colors flex items-center gap-2 shadow-lg">
+                  Explore Destinations <ArrowRight className="w-4 h-4" />
+                </button>
+                <button onClick={() => navigate('blogs')} className="px-6 py-3 bg-white/10 hover:bg-white/20 text-white font-semibold rounded-xl transition-colors border border-white/30 backdrop-blur-sm">
+                  Read Travel Guides
+                </button>
+              </div>
+            </motion.div>
+
+            {/* Right Image */}
+            <motion.div 
+              initial={{ opacity: 0, x: 20 }}
+              whileInView={{ opacity: 1, x: 0 }}
+              transition={{ duration: 0.6 }}
+              className="hidden lg:flex justify-end"
+            >
+              <div className="relative">
+                <div className="absolute inset-0 bg-gradient-to-r from-emerald-500/20 to-orange-500/10 rounded-3xl blur-2xl" />
+                <img 
+                  src="https://images.unsplash.com/photo-1491555103944-7c628ba54d3d?w=600&q=80" 
+                  alt="Adventure Woman Hiker" 
+                  className="relative rounded-3xl shadow-2xl object-cover h-[500px] w-full"
+                />
+                <div className="absolute inset-0 bg-gradient-to-t from-black/30 to-transparent rounded-3xl" />
+              </div>
+            </motion.div>
           </div>
         </div>
       </section>

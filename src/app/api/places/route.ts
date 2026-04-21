@@ -1,13 +1,14 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { db } from '@/lib/db';
+
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
 
 export async function GET() {
   try {
-    const places = await db.place.findMany({
-      orderBy: { createdAt: 'desc' },
-    });
-    return NextResponse.json({ success: true, data: places });
+    const response = await fetch(`${API_BASE_URL}/api/places`);
+    const data = await response.json();
+    return NextResponse.json(data);
   } catch (error) {
+    console.error('Error fetching places:', error);
     return NextResponse.json(
       { success: false, message: 'Failed to fetch places' },
       { status: 500 }
@@ -17,10 +18,16 @@ export async function GET() {
 
 export async function POST(req: NextRequest) {
   try {
-    const data = await req.json();
-    const place = await db.place.create({ data });
-    return NextResponse.json({ success: true, data: place }, { status: 201 });
+    const body = await req.json();
+    const response = await fetch(`${API_BASE_URL}/api/places`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(body),
+    });
+    const data = await response.json();
+    return NextResponse.json(data, { status: response.status });
   } catch (error) {
+    console.error('Error creating place:', error);
     return NextResponse.json(
       { success: false, message: 'Failed to create place' },
       { status: 500 }

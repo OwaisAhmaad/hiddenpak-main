@@ -1,14 +1,14 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { db } from '@/lib/db';
+
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
 
 export async function GET() {
   try {
-    let settings = await db.siteSetting.findFirst();
-    if (!settings) {
-      settings = await db.siteSetting.create({ data: {} });
-    }
-    return NextResponse.json({ success: true, data: settings });
+    const response = await fetch(`${API_BASE_URL}/api/settings`);
+    const data = await response.json();
+    return NextResponse.json(data);
   } catch (error) {
+    console.error('Error fetching settings:', error);
     return NextResponse.json(
       { success: false, message: 'Failed to fetch settings' },
       { status: 500 }
@@ -18,18 +18,16 @@ export async function GET() {
 
 export async function PUT(req: NextRequest) {
   try {
-    const data = await req.json();
-    let settings = await db.siteSetting.findFirst();
-    if (!settings) {
-      settings = await db.siteSetting.create({ data });
-    } else {
-      settings = await db.siteSetting.update({
-        where: { id: settings.id },
-        data,
-      });
-    }
-    return NextResponse.json({ success: true, data: settings });
+    const body = await req.json();
+    const response = await fetch(`${API_BASE_URL}/api/settings`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(body),
+    });
+    const data = await response.json();
+    return NextResponse.json(data, { status: response.status });
   } catch (error) {
+    console.error('Error updating settings:', error);
     return NextResponse.json(
       { success: false, message: 'Failed to update settings' },
       { status: 500 }

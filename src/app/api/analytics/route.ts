@@ -1,38 +1,14 @@
 import { NextResponse } from 'next/server';
-import { db } from '@/lib/db';
+
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
 
 export async function GET() {
   try {
-    const [totalBlogs, totalPlaces, totalGallery, totalTestimonials] =
-      await Promise.all([
-        db.blog.count(),
-        db.place.count(),
-        db.galleryImage.count(),
-        db.testimonial.count(),
-      ]);
-
-    const featuredPlaces = await db.place.findMany({
-      where: { featured: true },
-      take: 5,
-    });
-
-    const recentBlogs = await db.blog.findMany({
-      orderBy: { createdAt: 'desc' },
-      take: 5,
-    });
-
-    return NextResponse.json({
-      success: true,
-      data: {
-        totalBlogs,
-        totalPlaces,
-        totalGallery,
-        totalTestimonials,
-        featuredPlaces,
-        recentBlogs,
-      },
-    });
+    const response = await fetch(`${API_BASE_URL}/api/analytics`);
+    const data = await response.json();
+    return NextResponse.json(data);
   } catch (error) {
+    console.error('Error fetching analytics:', error);
     return NextResponse.json(
       { success: false, message: 'Failed to fetch analytics' },
       { status: 500 }
