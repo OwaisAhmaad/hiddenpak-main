@@ -1,26 +1,16 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { db } from '@/lib/db';
+import { api } from '@/lib/api';
 
 export async function GET(
   _req: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
-  try {
-    const { id } = await params;
-    const place = await db.place.findUnique({ where: { id } });
-    if (!place) {
-      return NextResponse.json(
-        { success: false, message: 'Place not found' },
-        { status: 404 }
-      );
-    }
-    return NextResponse.json({ success: true, data: place });
-  } catch (error) {
-    return NextResponse.json(
-      { success: false, message: 'Failed to fetch place' },
-      { status: 500 }
-    );
+  const { id } = await params;
+  const result = await api.get(`/places/${id}`);
+  if (!result.success) {
+    return NextResponse.json(result, { status: 404 });
   }
+  return NextResponse.json(result);
 }
 
 export async function PUT(
@@ -30,8 +20,11 @@ export async function PUT(
   try {
     const { id } = await params;
     const data = await req.json();
-    const place = await db.place.update({ where: { id }, data });
-    return NextResponse.json({ success: true, data: place });
+    const result = await api.put(`/places/${id}`, data);
+    if (!result.success) {
+      return NextResponse.json(result, { status: 500 });
+    }
+    return NextResponse.json(result);
   } catch (error) {
     return NextResponse.json(
       { success: false, message: 'Failed to update place' },
@@ -44,14 +37,10 @@ export async function DELETE(
   _req: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
-  try {
-    const { id } = await params;
-    await db.place.delete({ where: { id } });
-    return NextResponse.json({ success: true });
-  } catch (error) {
-    return NextResponse.json(
-      { success: false, message: 'Failed to delete place' },
-      { status: 500 }
-    );
+  const { id } = await params;
+  const result = await api.delete(`/places/${id}`);
+  if (!result.success) {
+    return NextResponse.json(result, { status: 500 });
   }
+  return NextResponse.json(result);
 }

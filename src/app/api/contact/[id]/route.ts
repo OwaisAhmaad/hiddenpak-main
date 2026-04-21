@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { db } from '@/lib/db';
+import { api } from '@/lib/api';
 
 export async function PATCH(
   req: NextRequest,
@@ -8,13 +8,11 @@ export async function PATCH(
   try {
     const { id } = await params;
     const body = await req.json();
-
-    const updated = await db.contactMessage.update({
-      where: { id },
-      data: { isRead: body.isRead ?? true },
-    });
-
-    return NextResponse.json({ success: true, data: updated });
+    const result = await api.patch(`/contact/${id}`, { isRead: body.isRead ?? true });
+    if (!result.success) {
+      return NextResponse.json(result, { status: 500 });
+    }
+    return NextResponse.json(result);
   } catch (error) {
     return NextResponse.json(
       { success: false, message: 'Failed to update message' },
@@ -24,17 +22,13 @@ export async function PATCH(
 }
 
 export async function DELETE(
-  req: NextRequest,
+  _req: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
-  try {
-    const { id } = await params;
-    await db.contactMessage.delete({ where: { id } });
-    return NextResponse.json({ success: true, message: 'Message deleted' });
-  } catch (error) {
-    return NextResponse.json(
-      { success: false, message: 'Failed to delete message' },
-      { status: 500 }
-    );
+  const { id } = await params;
+  const result = await api.delete(`/contact/${id}`);
+  if (!result.success) {
+    return NextResponse.json(result, { status: 500 });
   }
+  return NextResponse.json(result);
 }

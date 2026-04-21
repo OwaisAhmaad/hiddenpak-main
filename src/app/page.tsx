@@ -9,7 +9,7 @@ import {
   User, LogOut, Star, Search, Facebook, Twitter, Youtube,
   Instagram, Mountain, TreePine, Building2, Droplets, Globe,
   Clock, ChevronDown, Home, BookOpen, Camera, Info, Phone,
-  ExternalLink, Calendar, CheckCircle2, XCircle, Loader2
+  ExternalLink, Calendar, CheckCircle2, XCircle, Loader2, MessageCircle
 } from 'lucide-react';
 
 // ============================================
@@ -142,16 +142,16 @@ export default function HiddenPakApp() {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-[#0B0F19]">
+      <div className="min-h-screen flex items-center justify-center bg-white">
         <div className="flex flex-col items-center gap-4">
           <div className="w-12 h-12 bg-[#14532D] rounded-2xl flex items-center justify-center animate-pulse">
             <Compass className="w-6 h-6 text-white" />
           </div>
           <div className="flex items-center gap-2">
-            <span className="text-white font-bold text-xl">Hidden</span>
+            <span className="text-[#14532D] font-bold text-xl">Hidden</span>
             <span className="text-[#F97316] font-bold text-xl">Pak</span>
           </div>
-          <div className="w-8 h-8 border-2 border-[#14532D] border-t-[#F97316] rounded-full animate-spin" />
+          <div className="w-8 h-8 border-2 border-gray-200 border-t-[#2E8B57] rounded-full animate-spin" />
         </div>
       </div>
     );
@@ -353,12 +353,25 @@ function PublicSite({
             </div>
             <div>
               <h4 className="font-semibold text-sm uppercase tracking-wider mb-4 text-gray-300">Follow Us</h4>
-              <div className="flex items-center gap-3">
-                {[Facebook, Twitter, Youtube, Instagram].map((Icon, i) => (
-                  <a key={i} href="#" className="w-10 h-10 bg-[#1F2937] rounded-xl flex items-center justify-center text-gray-400 hover:text-[#F97316] hover:bg-[#1F2937]/80 transition-colors">
-                    <Icon className="w-4 h-4" />
-                  </a>
-                ))}
+              <div className="flex items-center gap-3 flex-wrap">
+                <a href="https://www.facebook.com/hiddenpak" target="_blank" rel="noopener noreferrer" className="w-10 h-10 bg-[#1F2937] rounded-xl flex items-center justify-center text-gray-400 hover:text-[#F97316] hover:bg-[#1F2937]/80 transition-colors">
+                  <Facebook className="w-4 h-4" />
+                </a>
+                <a href="https://www.instagram.com/hiddenpak" target="_blank" rel="noopener noreferrer" className="w-10 h-10 bg-[#1F2937] rounded-xl flex items-center justify-center text-gray-400 hover:text-[#F97316] hover:bg-[#1F2937]/80 transition-colors">
+                  <Instagram className="w-4 h-4" />
+                </a>
+                <a href="https://x.com/hiddenpak" target="_blank" rel="noopener noreferrer" className="w-10 h-10 bg-[#1F2937] rounded-xl flex items-center justify-center text-gray-400 hover:text-[#F97316] hover:bg-[#1F2937]/80 transition-colors">
+                  <Twitter className="w-4 h-4" />
+                </a>
+                <a href="https://www.pinterest.com/hiddenpak" target="_blank" rel="noopener noreferrer" className="w-10 h-10 bg-[#1F2937] rounded-xl flex items-center justify-center text-gray-400 hover:text-[#F97316] hover:bg-[#1F2937]/80 transition-colors">
+                  <span className="text-sm font-bold">P</span>
+                </a>
+                <a href="https://www.youtube.com/@hiddenpak" target="_blank" rel="noopener noreferrer" className="w-10 h-10 bg-[#1F2937] rounded-xl flex items-center justify-center text-gray-400 hover:text-[#F97316] hover:bg-[#1F2937]/80 transition-colors">
+                  <Youtube className="w-4 h-4" />
+                </a>
+                <a href="https://www.tiktok.com/@hiddenpak" target="_blank" rel="noopener noreferrer" className="w-10 h-10 bg-[#1F2937] rounded-xl flex items-center justify-center text-gray-400 hover:text-[#F97316] hover:bg-[#1F2937]/80 transition-colors">
+                  <span className="text-sm font-bold">T</span>
+                </a>
               </div>
             </div>
           </div>
@@ -367,6 +380,25 @@ function PublicSite({
           </div>
         </div>
       </footer>
+
+      {/* WhatsApp / Phone Floating Widget */}
+      <div className="fixed bottom-6 right-6 z-50 flex flex-col items-center gap-3">
+        <a
+          href="https://wa.me/923001234567"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="w-14 h-14 bg-[#25D366] hover:bg-[#1ebe57] rounded-full flex items-center justify-center text-white shadow-lg transition-colors animate-pulse"
+          style={{ animationDuration: '2s' }}
+        >
+          <MessageCircle className="w-6 h-6" />
+        </a>
+        <a
+          href="tel:+923001234567"
+          className="w-12 h-12 bg-[#0B0F19] hover:bg-[#1a1f2e] rounded-full flex items-center justify-center text-white shadow-lg transition-colors"
+        >
+          <Phone className="w-5 h-5" />
+        </a>
+      </div>
     </div>
   );
 }
@@ -386,6 +418,7 @@ function HomePage({ navigate, places, blogs, galleryImages, testimonials, setSel
   return (
     <div>
       {/* Hero */}
+<<<<<<< HEAD
       <section className="relative overflow-hidden min-h-screen bg-cover bg-center" style={{ backgroundImage: 'url(https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=1600&q=80)' }}>
         {/* Background Image Overlay */}
         <div className="absolute inset-0 bg-gradient-to-r from-black/60 via-black/40 to-black/20" />
@@ -428,6 +461,56 @@ function HomePage({ navigate, places, blogs, galleryImages, testimonials, setSel
             </div>
             {/* Empty column for desktop - image takes this space */}
             <div className="hidden lg:block" />
+=======
+      <section className="relative overflow-hidden min-h-[600px] sm:min-h-[700px] flex items-center">
+        <img
+          src="https://images.unsplash.com/photo-1569383746724-6f1b882b8f46?w=1920&q=80"
+          alt="K2 Mountain Pakistan"
+          className="absolute inset-0 w-full h-full object-cover"
+        />
+        <div className="absolute inset-0 bg-gradient-to-r from-black/70 via-black/50 to-black/40" />
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20 sm:py-28 lg:py-36 relative w-full">
+          <div className="max-w-2xl">
+            <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }}>
+              <span className="inline-flex items-center gap-2 px-3 py-1 bg-white/10 border border-white/20 rounded-full text-white/90 text-xs font-semibold mb-6">
+                <Globe className="w-3 h-3" />
+                Explorer & Travel
+              </span>
+            </motion.div>
+            <motion.h1 initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }} className="text-4xl sm:text-5xl lg:text-6xl font-bold text-white leading-tight mb-6">
+              Explore Pakistan&apos;s{' '}
+              <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#F97316] to-emerald-400">Hidden Gems</span>
+            </motion.h1>
+            <motion.p initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3 }} className="text-white/80 text-lg leading-relaxed mb-6 max-w-lg">
+              Discover the untouched wonders of nature, from majestic peaks to serene valleys. Immerse yourself in rich traditions, vibrant cultures, and timeless heritage.
+            </motion.p>
+            <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.35 }} className="mb-8">
+              <div className="flex items-center bg-white rounded-xl shadow-lg overflow-hidden max-w-md">
+                <input
+                  type="text"
+                  placeholder="Search places, destinations..."
+                  className="flex-1 px-4 py-3 text-sm text-gray-700 placeholder-gray-400 focus:outline-none bg-transparent"
+                />
+                <button onClick={() => navigate('places')} className="px-4 py-3 bg-[#2E8B57] hover:bg-[#14532D] text-white transition-colors flex items-center justify-center">
+                  <Search className="w-5 h-5" />
+                </button>
+              </div>
+            </motion.div>
+            <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.4 }} className="flex flex-wrap gap-4">
+              <button onClick={() => navigate('places')} className="px-6 py-3 bg-[#14532D] hover:bg-[#0D3B1F] text-white font-semibold rounded-xl transition-colors flex items-center gap-2 shadow-lg">
+                Explore Places <ArrowRight className="w-4 h-4" />
+              </button>
+              <a
+                href="https://wa.me/923001234567"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="px-6 py-3 bg-[#F97316] hover:bg-[#EA6D0E] text-white font-semibold rounded-xl transition-colors flex items-center gap-2 shadow-lg"
+              >
+                <MessageCircle className="w-4 h-4" />
+                Tour Guide
+              </a>
+            </motion.div>
+>>>>>>> 14ab91e3e67c07d8f83835d1b9147c0438419707
           </div>
         </div>
       </section>
@@ -495,6 +578,17 @@ function HomePage({ navigate, places, blogs, galleryImages, testimonials, setSel
               View All Places <ArrowRight className="w-4 h-4" />
             </button>
           </div>
+        </div>
+      </section>
+
+      {/* Tour Guide CTA */}
+      <section className="py-16 sm:py-20 bg-[#2E8B57]">
+        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+          <h2 className="text-3xl sm:text-4xl font-bold text-white mb-4">Get a Local Tour Guide</h2>
+          <p className="text-white/80 text-lg mb-8 max-w-2xl mx-auto">Connect with experienced local guides who know the hidden trails, secret spots, and rich stories of Pakistan&apos;s most beautiful regions.</p>
+          <a href="https://wa.me/923001234567" target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-2 px-8 py-4 bg-white text-[#2E8B57] font-bold rounded-xl hover:bg-gray-100 transition-colors text-lg">
+            <MessageCircle className="w-5 h-5" /> Chat on WhatsApp
+          </a>
         </div>
       </section>
 
