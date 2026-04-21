@@ -1,27 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server';
-<<<<<<< HEAD
-
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
-
-export async function GET() {
-  try {
-    const response = await fetch(`${API_BASE_URL}/api/contact`);
-    const data = await response.json();
-    return NextResponse.json(data);
-  } catch (error) {
-    console.error('Error fetching contact messages:', error);
-    return NextResponse.json(
-      { success: false, message: 'Failed to fetch contact messages' },
-      { status: 500 }
-    );
-=======
 import { api } from '@/lib/api';
 
 export async function GET() {
   const result = await api.get('/contact');
   if (!result.success) {
     return NextResponse.json(result, { status: 500 });
->>>>>>> 14ab91e3e67c07d8f83835d1b9147c0438419707
   }
   return NextResponse.json(result);
 }
@@ -29,15 +12,6 @@ export async function GET() {
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
-<<<<<<< HEAD
-    const response = await fetch(`${API_BASE_URL}/api/contact`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(body),
-    });
-    const data = await response.json();
-    return NextResponse.json(data, { status: response.status });
-=======
     const { name, email, subject, message } = body;
 
     // Validation
@@ -94,7 +68,6 @@ export async function POST(req: NextRequest) {
     }
 
     return NextResponse.json(result, { status: 201 });
->>>>>>> 14ab91e3e67c07d8f83835d1b9147c0438419707
   } catch (error) {
     console.error('Contact form error:', error);
     return NextResponse.json(

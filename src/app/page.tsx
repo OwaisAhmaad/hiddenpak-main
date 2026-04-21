@@ -62,10 +62,12 @@ export default function HiddenPakApp() {
   const [testimonials, setTestimonials] = useState<Testimonial[]>([]);
   const [analytics, setAnalytics] = useState<AnalyticsData | null>(null);
   const [loading, setLoading] = useState(true);
+  const [fetchError, setFetchError] = useState<string | null>(null);
 
   // Fetch all data on mount
   const fetchData = useCallback(async () => {
     try {
+      setFetchError(null);
       const [placesRes, blogsRes, galleryRes, testimonialsRes] = await Promise.all([
         fetch('/api/places'), fetch('/api/blogs'),
         fetch('/api/gallery'), fetch('/api/testimonials')
@@ -77,8 +79,11 @@ export default function HiddenPakApp() {
       if (blogsData.success) setBlogs(blogsData.data);
       if (galleryData.success) setGalleryImages(galleryData.data);
       if (testimonialsData.success) setTestimonials(testimonialsData.data);
+      const failed = [placesData, blogsData, galleryData, testimonialsData].find(d => !d.success);
+      if (failed) setFetchError(failed.message || 'Failed to load data from backend.');
     } catch (err) {
       console.error('Failed to fetch data:', err);
+      setFetchError('Failed to connect to backend. Please make sure API server is running.');
     } finally {
       setLoading(false);
     }
@@ -170,6 +175,7 @@ export default function HiddenPakApp() {
             blogs={blogs}
             galleryImages={galleryImages}
             testimonials={testimonials}
+            fetchError={fetchError}
             selectedBlogId={selectedBlogId}
             setSelectedBlogId={setSelectedBlogId}
             onAdminClick={() => navigate('login')}
@@ -200,13 +206,13 @@ export default function HiddenPakApp() {
 // ============================================
 function PublicSite({
   currentView, navigate, mobileMenuOpen, setMobileMenuOpen,
-  places, blogs, galleryImages, testimonials, selectedBlogId,
+  places, blogs, galleryImages, testimonials, fetchError, selectedBlogId,
   setSelectedBlogId, onAdminClick
 }: {
   currentView: View; navigate: (v: View) => void;
   mobileMenuOpen: boolean; setMobileMenuOpen: (v: boolean) => void;
   places: Place[]; blogs: Blog[]; galleryImages: GalleryImage[];
-  testimonials: Testimonial[]; selectedBlogId: string | null;
+  testimonials: Testimonial[]; fetchError: string | null; selectedBlogId: string | null;
   setSelectedBlogId: (id: string | null) => void; onAdminClick: () => void;
 }) {
   const navItems = [
@@ -307,6 +313,13 @@ function PublicSite({
 
       {/* Main Content */}
       <main className="flex-1">
+        {fetchError && (
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-4">
+            <div className="rounded-xl border border-red-200 bg-red-50 text-red-700 px-4 py-3 text-sm">
+              {fetchError}
+            </div>
+          </div>
+        )}
         <motion.div
           key={currentView}
           initial={{ opacity: 0, y: 10 }}
@@ -329,8 +342,8 @@ function PublicSite({
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
             <div>
               <div className="flex items-center gap-2 mb-4">
-                <div className="w-9 h-9 bg-[#14532D] rounded-xl flex items-center justify-center">
-                  <Compass className="w-5 h-5 text-white" />
+                <div className="w-10 h-10 flex items-center justify-center">
+                  <img src="/hiddenpak-logo.svg" alt="HiddenPak" className="w-full h-full object-contain" />
                 </div>
                 <span className="font-bold text-lg">
                   <span className="text-white">Hidden</span>
@@ -384,7 +397,7 @@ function PublicSite({
       {/* WhatsApp / Phone Floating Widget */}
       <div className="fixed bottom-6 right-6 z-50 flex flex-col items-center gap-3">
         <a
-          href="https://wa.me/923001234567"
+          href="https://wa.me/923119142765"
           target="_blank"
           rel="noopener noreferrer"
           className="w-14 h-14 bg-[#25D366] hover:bg-[#1ebe57] rounded-full flex items-center justify-center text-white shadow-lg transition-colors animate-pulse"
@@ -393,7 +406,7 @@ function PublicSite({
           <MessageCircle className="w-6 h-6" />
         </a>
         <a
-          href="tel:+923001234567"
+          href="tel:03119142765"
           className="w-12 h-12 bg-[#0B0F19] hover:bg-[#1a1f2e] rounded-full flex items-center justify-center text-white shadow-lg transition-colors"
         >
           <Phone className="w-5 h-5" />
@@ -418,58 +431,20 @@ function HomePage({ navigate, places, blogs, galleryImages, testimonials, setSel
   return (
     <div>
       {/* Hero */}
-<<<<<<< HEAD
-      <section className="relative overflow-hidden min-h-screen bg-cover bg-center" style={{ backgroundImage: 'url(https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=1600&q=80)' }}>
-        {/* Background Image Overlay */}
-        <div className="absolute inset-0 bg-gradient-to-r from-black/60 via-black/40 to-black/20" />
-        
-        {/* Woman Hiker Image - Stylish Overlay */}
-        <div className="absolute inset-0 hidden lg:flex items-end justify-end">
-          <img 
-            src="https://images.unsplash.com/photo-1491555103944-7c628ba54d3d?w=600&q=80" 
-            alt="Adventure Woman" 
-            className="h-full object-cover object-center drop-shadow-2xl"
-            style={{ width: '45%', clipPath: 'polygon(30% 0%, 100% 0%, 100% 100%, 0% 100%)' }}
-          />
-        </div>
-
-        {/* Content Container */}
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16 sm:py-24 lg:py-32 relative z-10 h-full flex flex-col justify-center">
-          <div className="grid lg:grid-cols-2 gap-12 items-center">
-            <div className="max-w-2xl">
-              <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }}>
-                <span className="inline-flex items-center gap-2 px-3 py-1 bg-[#14532D]/30 backdrop-blur-sm border border-[#14532D]/50 rounded-full text-emerald-300 text-xs font-semibold mb-6">
-                  <Globe className="w-3 h-3" />
-                  Explorer & Travel
-                </span>
-              </motion.div>
-              <motion.h1 initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }} className="text-4xl sm:text-5xl lg:text-6xl font-bold text-white leading-tight mb-6">
-                Explore Pakistan&apos;s{' '}
-                <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#F97316] to-emerald-400">Hidden Gems</span>
-              </motion.h1>
-              <motion.p initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3 }} className="text-gray-200 text-lg leading-relaxed mb-8">
-                Discover the untouched wonders of nature, from majestic peaks to serene valleys. Immerse yourself in rich traditions, vibrant cultures, and timeless heritage.
-              </motion.p>
-              <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.4 }} className="flex flex-wrap gap-4">
-                <button onClick={() => navigate('places')} className="px-6 py-3 bg-[#F97316] hover:bg-[#EA6D0E] text-white font-semibold rounded-xl transition-colors flex items-center gap-2 shadow-lg hover:shadow-xl">
-                  Explore Places <ArrowRight className="w-4 h-4" />
-                </button>
-                <button onClick={() => navigate('blogs')} className="px-6 py-3 bg-white/20 hover:bg-white/30 backdrop-blur-sm text-white font-semibold rounded-xl transition-colors border border-white/40">
-                  Read Blogs
-                </button>
-              </motion.div>
-            </div>
-            {/* Empty column for desktop - image takes this space */}
-            <div className="hidden lg:block" />
-=======
       <section className="relative overflow-hidden min-h-[600px] sm:min-h-[700px] flex items-center">
         <img
-          src="https://images.unsplash.com/photo-1569383746724-6f1b882b8f46?w=1920&q=80"
-          alt="K2 Mountain Pakistan"
+          src="/images/rectangle-39389.png"
+          alt="HiddenPak mountain landscape"
           className="absolute inset-0 w-full h-full object-cover"
         />
         <div className="absolute inset-0 bg-gradient-to-r from-black/70 via-black/50 to-black/40" />
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20 sm:py-28 lg:py-36 relative w-full">
+        <div className="absolute inset-y-0 right-0 w-1/2 hidden md:block bg-gradient-to-l from-black/30 to-transparent" />
+        <img
+          src="/images/hiking-woman.png"
+          alt="Hiking woman"
+          className="absolute bottom-0 right-6 lg:right-14 z-10 hidden md:block h-[88%] lg:h-[96%] w-auto object-contain pointer-events-none select-none drop-shadow-[0_20px_40px_rgba(0,0,0,0.45)]"
+        />
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20 sm:py-28 lg:py-36 relative z-20 w-full">
           <div className="max-w-2xl">
             <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }}>
               <span className="inline-flex items-center gap-2 px-3 py-1 bg-white/10 border border-white/20 rounded-full text-white/90 text-xs font-semibold mb-6">
@@ -501,7 +476,7 @@ function HomePage({ navigate, places, blogs, galleryImages, testimonials, setSel
                 Explore Places <ArrowRight className="w-4 h-4" />
               </button>
               <a
-                href="https://wa.me/923001234567"
+                href="https://wa.me/923119142765"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="px-6 py-3 bg-[#F97316] hover:bg-[#EA6D0E] text-white font-semibold rounded-xl transition-colors flex items-center gap-2 shadow-lg"
@@ -510,7 +485,6 @@ function HomePage({ navigate, places, blogs, galleryImages, testimonials, setSel
                 Tour Guide
               </a>
             </motion.div>
->>>>>>> 14ab91e3e67c07d8f83835d1b9147c0438419707
           </div>
         </div>
       </section>
@@ -586,7 +560,7 @@ function HomePage({ navigate, places, blogs, galleryImages, testimonials, setSel
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
           <h2 className="text-3xl sm:text-4xl font-bold text-white mb-4">Get a Local Tour Guide</h2>
           <p className="text-white/80 text-lg mb-8 max-w-2xl mx-auto">Connect with experienced local guides who know the hidden trails, secret spots, and rich stories of Pakistan&apos;s most beautiful regions.</p>
-          <a href="https://wa.me/923001234567" target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-2 px-8 py-4 bg-white text-[#2E8B57] font-bold rounded-xl hover:bg-gray-100 transition-colors text-lg">
+          <a href="https://wa.me/923119142765" target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-2 px-8 py-4 bg-white text-[#2E8B57] font-bold rounded-xl hover:bg-gray-100 transition-colors text-lg">
             <MessageCircle className="w-5 h-5" /> Chat on WhatsApp
           </a>
         </div>

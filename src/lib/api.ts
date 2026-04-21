@@ -8,7 +8,11 @@
  * Default: http://localhost:5000/api
  */
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api';
+const RAW_API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api';
+const API_BASE_URL = (() => {
+  const normalized = RAW_API_BASE_URL.replace(/\/$/, '');
+  return normalized.endsWith('/api') ? normalized : `${normalized}/api`;
+})();
 
 interface ApiResponse<T = any> {
   success: boolean;
@@ -40,8 +44,26 @@ async function apiRequest<T = any>(
       headers,
     });
 
-    const data = await res.json();
-    return data;
+    const payload = await res.json();
+
+    // Support both backend formats:
+    // 1) { success, data, message }
+    // 2) direct JSON payload (array/object)
+    if (typeof payload === 'object' && payload !== null && 'success' in payload) {
+      return payload as ApiResponse<T>;
+    }
+
+    if (!res.ok) {
+      return {
+        success: false,
+        message:
+          (typeof payload === 'object' && payload !== null && 'message' in payload
+            ? String((payload as { message?: unknown }).message)
+            : `Request failed with status ${res.status}`),
+      };
+    }
+
+    return { success: true, data: payload as T };
   } catch (error) {
     console.error(`API request failed for ${path}:`, error);
     return { success: false, message: 'Failed to connect to the API server. Make sure the backend is running.' };
