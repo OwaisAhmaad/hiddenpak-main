@@ -442,7 +442,7 @@ function HomePage({ navigate, places, blogs, galleryImages, testimonials, setSel
   return (
     <div>
       {/* Hero */}
-      <section className="relative w-full min-h-screen flex items-center overflow-hidden">
+      <section className="relative w-full min-h-screen overflow-hidden">
         {/* Full-width cinematic background — preloaded for LCP */}
         <img
           src="/images/rectangle-39389.png"
@@ -454,11 +454,11 @@ function HomePage({ navigate, places, blogs, galleryImages, testimonials, setSel
         {/* Soft gradient overlay for text readability */}
         <div className="absolute inset-0 bg-gradient-to-b from-black/55 via-black/45 to-black/60" />
 
-        <div className="relative z-10 w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20 sm:py-28">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-end min-h-[calc(100vh-8rem)]">
+        <div className="relative z-10 w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex flex-col lg:flex-row items-center lg:items-end min-h-screen pt-24 pb-12 lg:pb-0 gap-6">
 
             {/* LEFT — Text content */}
-            <div className="flex flex-col justify-center py-12 lg:py-20">
+            <div className="flex-1 flex flex-col justify-center lg:pb-16">
               {/* Eyebrow badge */}
               <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5, delay: 0.1 }}>
                 <span className="inline-flex items-center gap-2 px-3 py-1.5 bg-white/10 border border-white/25 rounded-full text-white/85 text-xs font-medium tracking-wide mb-7">
@@ -526,12 +526,12 @@ function HomePage({ navigate, places, blogs, galleryImages, testimonials, setSel
               initial={{ opacity: 0, x: 30 }}
               animate={{ opacity: 1, x: 0 }}
               transition={{ duration: 0.8, delay: 0.3 }}
-              className="hidden lg:flex items-end justify-center lg:justify-end h-full"
+              className="hidden lg:flex items-end justify-end self-end flex-shrink-0"
             >
               <img
                 src="/images/hiking-woman.png"
                 alt="Explorer with backpack ready to discover Pakistan"
-                className="h-[85vh] max-h-[700px] w-auto object-contain object-bottom select-none pointer-events-none drop-shadow-[0_0_40px_rgba(0,0,0,0.5)]"
+                className="h-[78vh] max-h-[680px] w-auto object-contain object-bottom select-none pointer-events-none drop-shadow-[0_0_40px_rgba(0,0,0,0.5)]"
                 fetchPriority="high"
                 decoding="async"
               />
