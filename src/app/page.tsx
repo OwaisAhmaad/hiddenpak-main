@@ -4,12 +4,12 @@ import { useState, useEffect, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   Compass, MapPin, FileText, Image, BarChart3, TrendingUp,
-  Menu, X, Bell, ChevronRight, Plus, ArrowRight, Pencil,
+  Menu, X, Bell, Plus, ArrowRight, Pencil,
   Trash2, Eye, Lock, Mail, ArrowLeft, AlertCircle, Settings,
-  User, LogOut, Star, Search, Facebook, Twitter, Youtube,
+  LogOut, Star, Facebook, Twitter, Youtube,
   Instagram, Mountain, TreePine, Building2, Droplets, Globe,
   Clock, ChevronDown, Home, BookOpen, Camera, Info, Phone,
-  ExternalLink, Calendar, CheckCircle2, XCircle, Loader2, MessageCircle
+  ExternalLink, Calendar, CheckCircle2, Loader2, MessageCircle
 } from 'lucide-react';
 
 // ============================================
@@ -82,8 +82,7 @@ export default function HiddenPakApp() {
       if (testimonialsData.success) setTestimonials(testimonialsData.data);
       const failed = [placesData, blogsData, galleryData, testimonialsData].find(d => !d.success);
       if (failed) setFetchError(failed.message || 'Failed to load data from backend.');
-    } catch (err) {
-      console.error('Failed to fetch data:', err);
+    } catch {
       setFetchError('Failed to connect to backend. Please make sure API server is running.');
     } finally {
       setLoading(false);
@@ -97,9 +96,8 @@ export default function HiddenPakApp() {
       const res = await fetch('/api/analytics');
       const data = await res.json();
       if (data.success) setAnalytics(data.data);
-    } catch (err) {
-      console.error('Failed to fetch analytics:', err);
-    }
+    } catch { /* silent */ }
+
   }, []);
 
   // Check auth on mount
@@ -129,8 +127,10 @@ export default function HiddenPakApp() {
       body: JSON.stringify({ email, password }),
     });
     const data = await res.json();
-    if (data.success && data.data) {
-      const { admin, token } = data.data;
+    // Auth route returns { success, token, admin } directly (not nested under data)
+    if (data.success && (data.token || data.data?.token)) {
+      const admin = data.admin || data.data?.admin;
+      const token = data.token || data.data?.token;
       setIsAdmin(true);
       setAdminUser(admin);
       sessionStorage.setItem('hiddenpak_admin', JSON.stringify({ ...admin, token }));
@@ -447,68 +447,87 @@ function HomePage({ navigate, places, blogs, galleryImages, testimonials, setSel
         {/* Soft gradient overlay for text readability */}
         <div className="absolute inset-0 bg-gradient-to-b from-black/55 via-black/45 to-black/60" />
 
-        <div className="relative z-10 w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-28 sm:py-36">
-          <div className="max-w-3xl">
-            {/* Eyebrow badge */}
-            <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5, delay: 0.1 }}>
-              <span className="inline-flex items-center gap-2 px-3 py-1.5 bg-white/10 border border-white/25 rounded-full text-white/85 text-xs font-medium tracking-wide mb-8">
-                <Globe className="w-3 h-3 text-emerald-300" />
-                Explorer &amp; Travel
-              </span>
-            </motion.div>
+        <div className="relative z-10 w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20 sm:py-28">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-end min-h-[calc(100vh-8rem)]">
 
-            {/* Main headline */}
-            <motion.h1
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.6, delay: 0.2 }}
-              className="text-4xl sm:text-5xl lg:text-[3.75rem] font-bold text-white leading-[1.15] mb-6"
-            >
-              Explore Pakistan&apos;s{' '}
-              <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#F97316] to-emerald-400">
-                Hidden Gems
-              </span>
-            </motion.h1>
+            {/* LEFT — Text content */}
+            <div className="flex flex-col justify-center py-12 lg:py-20">
+              {/* Eyebrow badge */}
+              <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5, delay: 0.1 }}>
+                <span className="inline-flex items-center gap-2 px-3 py-1.5 bg-white/10 border border-white/25 rounded-full text-white/85 text-xs font-medium tracking-wide mb-7">
+                  <Globe className="w-3 h-3 text-emerald-300" />
+                  Explorer &amp; Travel
+                </span>
+              </motion.div>
 
-            {/* Subtext */}
-            <motion.p
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.6, delay: 0.3 }}
-              className="text-white/75 text-base sm:text-lg leading-relaxed mb-12 max-w-2xl"
-            >
-              Discover the untouched wonders of nature, from majestic peaks to serene valleys.
-              Immerse yourself in rich traditions, vibrant cultures, and timeless heritage.
-              Uncover the hidden beauty of Pakistan that goes beyond the ordinary.
-            </motion.p>
+              {/* Main headline */}
+              <motion.h1
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.6, delay: 0.2 }}
+                className="text-4xl sm:text-5xl lg:text-[3.5rem] font-bold text-white leading-[1.15] mb-6"
+              >
+                Explore Pakistan&apos;s{' '}
+                <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#F97316] to-emerald-400">
+                  Hidden Gems
+                </span>
+              </motion.h1>
 
-            {/* Location & Date selectors */}
+              {/* Subtext */}
+              <motion.p
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.6, delay: 0.3 }}
+                className="text-white/75 text-base sm:text-lg leading-relaxed mb-10 max-w-xl"
+              >
+                Discover the untouched wonders of nature, from majestic peaks to serene valleys.
+                Immerse yourself in rich traditions, vibrant cultures, and timeless heritage.
+                Uncover the hidden beauty of Pakistan that goes beyond the ordinary.
+              </motion.p>
+
+              {/* Location & Date selectors */}
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.6, delay: 0.4 }}
+                className="flex flex-col sm:flex-row gap-3"
+              >
+                {/* Location selector */}
+                <div className="flex items-center gap-3 bg-white/10 backdrop-blur-md border border-white/20 rounded-2xl px-5 py-4 sm:min-w-[210px] cursor-pointer hover:bg-white/15 transition-colors group">
+                  <MapPin className="w-4 h-4 text-[#F97316] flex-shrink-0" />
+                  <div className="flex-1 min-w-0">
+                    <p className="text-white/50 text-[11px] font-medium uppercase tracking-wider">Location</p>
+                    <p className="text-white font-semibold text-sm mt-0.5">Abbottabad</p>
+                  </div>
+                  <ChevronDown className="w-4 h-4 text-white/50 flex-shrink-0 group-hover:text-white/80 transition-colors" />
+                </div>
+
+                {/* Date selector */}
+                <div className="flex items-center gap-3 bg-white/10 backdrop-blur-md border border-white/20 rounded-2xl px-5 py-4 sm:min-w-[210px] cursor-pointer hover:bg-white/15 transition-colors group">
+                  <Calendar className="w-4 h-4 text-[#F97316] flex-shrink-0" />
+                  <div className="flex-1 min-w-0">
+                    <p className="text-white/50 text-[11px] font-medium uppercase tracking-wider">Date</p>
+                    <p className="text-white font-semibold text-sm mt-0.5">13 May, 2025</p>
+                  </div>
+                  <ChevronDown className="w-4 h-4 text-white/50 flex-shrink-0 group-hover:text-white/80 transition-colors" />
+                </div>
+              </motion.div>
+            </div>
+
+            {/* RIGHT — Hiking woman image */}
             <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.6, delay: 0.4 }}
-              className="flex flex-col sm:flex-row gap-3"
+              initial={{ opacity: 0, x: 30 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ duration: 0.8, delay: 0.3 }}
+              className="hidden lg:flex items-end justify-center lg:justify-end h-full"
             >
-              {/* Location selector */}
-              <div className="flex items-center gap-3 bg-white/10 backdrop-blur-md border border-white/20 rounded-2xl px-5 py-4 sm:min-w-[220px] cursor-pointer hover:bg-white/15 transition-colors group">
-                <MapPin className="w-4 h-4 text-[#F97316] flex-shrink-0" />
-                <div className="flex-1 min-w-0">
-                  <p className="text-white/50 text-[11px] font-medium uppercase tracking-wider">Location</p>
-                  <p className="text-white font-semibold text-sm mt-0.5">Abbottabad</p>
-                </div>
-                <ChevronDown className="w-4 h-4 text-white/50 flex-shrink-0 group-hover:text-white/80 transition-colors" />
-              </div>
-
-              {/* Date selector */}
-              <div className="flex items-center gap-3 bg-white/10 backdrop-blur-md border border-white/20 rounded-2xl px-5 py-4 sm:min-w-[220px] cursor-pointer hover:bg-white/15 transition-colors group">
-                <Calendar className="w-4 h-4 text-[#F97316] flex-shrink-0" />
-                <div className="flex-1 min-w-0">
-                  <p className="text-white/50 text-[11px] font-medium uppercase tracking-wider">Date</p>
-                  <p className="text-white font-semibold text-sm mt-0.5">13 May, 2025</p>
-                </div>
-                <ChevronDown className="w-4 h-4 text-white/50 flex-shrink-0 group-hover:text-white/80 transition-colors" />
-              </div>
+              <img
+                src="/images/hiking-woman.png"
+                alt="Explorer with backpack ready to discover Pakistan"
+                className="h-[85vh] max-h-[700px] w-auto object-contain object-bottom select-none pointer-events-none drop-shadow-[0_0_40px_rgba(0,0,0,0.5)]"
+              />
             </motion.div>
+
           </div>
         </div>
       </section>
