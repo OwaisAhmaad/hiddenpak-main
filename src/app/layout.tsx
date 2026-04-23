@@ -82,7 +82,11 @@ export const metadata: Metadata = {
     },
   },
   icons: {
-    icon: "/favicon.ico",
+    icon: [
+      { url: "/hiddenpak-logo.svg", type: "image/svg+xml" },
+    ],
+    shortcut: "/hiddenpak-logo.svg",
+    apple: "/hiddenpak-logo.svg",
   },
 };
 

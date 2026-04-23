@@ -18,7 +18,7 @@ import {
 interface Place {
   id: string; slug: string; name: string; region: string;
   description: string; longDescription: string; image: string;
-  gallery: string; rating: number; altitude: string;
+  gallery: string[]; rating: number; altitude: string;
   bestTime: string; category: string; featured: boolean;
 }
 
@@ -26,7 +26,7 @@ interface Blog {
   id: string; slug: string; title: string; excerpt: string;
   content: string; coverImage: string; author: string;
   authorImage: string; authorBio: string; date: string;
-  readTime: string; category: string; tags: string; published: boolean;
+  readTime: string; category: string; tags: string[]; published: boolean;
 }
 
 interface GalleryImage {
@@ -39,8 +39,9 @@ interface Testimonial {
 }
 
 interface AnalyticsData {
-  totalBlogs: number; totalPlaces: number; totalGallery: number;
-  totalTestimonials: number; featuredPlaces: Place[]; recentBlogs: Blog[];
+  totalEvents: number;
+  eventTypes: { _id: string; count: number }[];
+  recentEvents: { eventType: string; page: string; timestamp: string }[];
 }
 
 type View = 'home' | 'places' | 'blogs' | 'gallery' | 'about' | 'contact' | 'login' | 'dashboard' | 'admin-blogs' | 'admin-places' | 'admin-gallery' | 'admin-analytics' | 'admin-settings' | 'blog-detail';
@@ -105,10 +106,14 @@ export default function HiddenPakApp() {
   useEffect(() => {
     const auth = sessionStorage.getItem('hiddenpak_admin');
     if (auth) {
-      const user = JSON.parse(auth);
-      setIsAdmin(true);
-      setAdminUser(user);
-      fetchAnalytics();
+      try {
+        const user = JSON.parse(auth);
+        if (user && user.email) {
+          setIsAdmin(true);
+          setAdminUser({ email: user.email, name: user.name });
+          fetchAnalytics();
+        }
+      } catch { /* ignore */ }
     }
   }, [fetchAnalytics]);
 
@@ -124,10 +129,11 @@ export default function HiddenPakApp() {
       body: JSON.stringify({ email, password }),
     });
     const data = await res.json();
-    if (data.success) {
+    if (data.success && data.data) {
+      const { admin, token } = data.data;
       setIsAdmin(true);
-      setAdminUser(data.admin);
-      sessionStorage.setItem('hiddenpak_admin', JSON.stringify(data.admin));
+      setAdminUser(admin);
+      sessionStorage.setItem('hiddenpak_admin', JSON.stringify({ ...admin, token }));
       navigate('dashboard');
       fetchAnalytics();
       return true;
@@ -431,59 +437,77 @@ function HomePage({ navigate, places, blogs, galleryImages, testimonials, setSel
   return (
     <div>
       {/* Hero */}
-      <section className="relative overflow-hidden min-h-[600px] sm:min-h-[700px] flex items-center">
+      <section className="relative w-full min-h-screen flex items-center overflow-hidden">
+        {/* Full-width cinematic background */}
         <img
           src="/images/rectangle-39389.png"
-          alt="HiddenPak mountain landscape"
-          className="absolute inset-0 w-full h-full object-cover"
+          alt="Woman hiking in the mountains of northern Pakistan"
+          className="absolute inset-0 w-full h-full object-cover object-center"
         />
-        <div className="absolute inset-0 bg-gradient-to-r from-black/70 via-black/50 to-black/40" />
-        <div className="absolute inset-y-0 right-0 w-1/2 hidden md:block bg-gradient-to-l from-black/30 to-transparent" />
-        <img
-          src="/images/hiking-woman.png"
-          alt="Hiking woman"
-          className="absolute bottom-0 right-6 lg:right-14 z-10 hidden md:block h-[88%] lg:h-[96%] w-auto object-contain pointer-events-none select-none drop-shadow-[0_20px_40px_rgba(0,0,0,0.45)]"
-        />
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20 sm:py-28 lg:py-36 relative z-20 w-full">
-          <div className="max-w-2xl">
-            <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }}>
-              <span className="inline-flex items-center gap-2 px-3 py-1 bg-white/10 border border-white/20 rounded-full text-white/90 text-xs font-semibold mb-6">
-                <Globe className="w-3 h-3" />
-                Explorer & Travel
+        {/* Soft gradient overlay for text readability */}
+        <div className="absolute inset-0 bg-gradient-to-b from-black/55 via-black/45 to-black/60" />
+
+        <div className="relative z-10 w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-28 sm:py-36">
+          <div className="max-w-3xl">
+            {/* Eyebrow badge */}
+            <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5, delay: 0.1 }}>
+              <span className="inline-flex items-center gap-2 px-3 py-1.5 bg-white/10 border border-white/25 rounded-full text-white/85 text-xs font-medium tracking-wide mb-8">
+                <Globe className="w-3 h-3 text-emerald-300" />
+                Explorer &amp; Travel
               </span>
             </motion.div>
-            <motion.h1 initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }} className="text-4xl sm:text-5xl lg:text-6xl font-bold text-white leading-tight mb-6">
+
+            {/* Main headline */}
+            <motion.h1
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.6, delay: 0.2 }}
+              className="text-4xl sm:text-5xl lg:text-[3.75rem] font-bold text-white leading-[1.15] mb-6"
+            >
               Explore Pakistan&apos;s{' '}
-              <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#F97316] to-emerald-400">Hidden Gems</span>
+              <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#F97316] to-emerald-400">
+                Hidden Gems
+              </span>
             </motion.h1>
-            <motion.p initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3 }} className="text-white/80 text-lg leading-relaxed mb-6 max-w-lg">
-              Discover the untouched wonders of nature, from majestic peaks to serene valleys. Immerse yourself in rich traditions, vibrant cultures, and timeless heritage.
+
+            {/* Subtext */}
+            <motion.p
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.6, delay: 0.3 }}
+              className="text-white/75 text-base sm:text-lg leading-relaxed mb-12 max-w-2xl"
+            >
+              Discover the untouched wonders of nature, from majestic peaks to serene valleys.
+              Immerse yourself in rich traditions, vibrant cultures, and timeless heritage.
+              Uncover the hidden beauty of Pakistan that goes beyond the ordinary.
             </motion.p>
-            <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.35 }} className="mb-8">
-              <div className="flex items-center bg-white rounded-xl shadow-lg overflow-hidden max-w-md">
-                <input
-                  type="text"
-                  placeholder="Search places, destinations..."
-                  className="flex-1 px-4 py-3 text-sm text-gray-700 placeholder-gray-400 focus:outline-none bg-transparent"
-                />
-                <button onClick={() => navigate('places')} className="px-4 py-3 bg-[#2E8B57] hover:bg-[#14532D] text-white transition-colors flex items-center justify-center">
-                  <Search className="w-5 h-5" />
-                </button>
+
+            {/* Location & Date selectors */}
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.6, delay: 0.4 }}
+              className="flex flex-col sm:flex-row gap-3"
+            >
+              {/* Location selector */}
+              <div className="flex items-center gap-3 bg-white/10 backdrop-blur-md border border-white/20 rounded-2xl px-5 py-4 sm:min-w-[220px] cursor-pointer hover:bg-white/15 transition-colors group">
+                <MapPin className="w-4 h-4 text-[#F97316] flex-shrink-0" />
+                <div className="flex-1 min-w-0">
+                  <p className="text-white/50 text-[11px] font-medium uppercase tracking-wider">Location</p>
+                  <p className="text-white font-semibold text-sm mt-0.5">Abbottabad</p>
+                </div>
+                <ChevronDown className="w-4 h-4 text-white/50 flex-shrink-0 group-hover:text-white/80 transition-colors" />
               </div>
-            </motion.div>
-            <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.4 }} className="flex flex-wrap gap-4">
-              <button onClick={() => navigate('places')} className="px-6 py-3 bg-[#14532D] hover:bg-[#0D3B1F] text-white font-semibold rounded-xl transition-colors flex items-center gap-2 shadow-lg">
-                Explore Places <ArrowRight className="w-4 h-4" />
-              </button>
-              <a
-                href="https://wa.me/923119142765"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="px-6 py-3 bg-[#F97316] hover:bg-[#EA6D0E] text-white font-semibold rounded-xl transition-colors flex items-center gap-2 shadow-lg"
-              >
-                <MessageCircle className="w-4 h-4" />
-                Tour Guide
-              </a>
+
+              {/* Date selector */}
+              <div className="flex items-center gap-3 bg-white/10 backdrop-blur-md border border-white/20 rounded-2xl px-5 py-4 sm:min-w-[220px] cursor-pointer hover:bg-white/15 transition-colors group">
+                <Calendar className="w-4 h-4 text-[#F97316] flex-shrink-0" />
+                <div className="flex-1 min-w-0">
+                  <p className="text-white/50 text-[11px] font-medium uppercase tracking-wider">Date</p>
+                  <p className="text-white font-semibold text-sm mt-0.5">13 May, 2025</p>
+                </div>
+                <ChevronDown className="w-4 h-4 text-white/50 flex-shrink-0 group-hover:text-white/80 transition-colors" />
+              </div>
             </motion.div>
           </div>
         </div>
@@ -641,6 +665,76 @@ function HomePage({ navigate, places, blogs, galleryImages, testimonials, setSel
             <button onClick={() => navigate('gallery')} className="px-6 py-3 bg-[#14532D] hover:bg-[#14532D]/90 text-white font-semibold rounded-xl transition-colors flex items-center gap-2 mx-auto">
               View Full Gallery <ArrowRight className="w-4 h-4" />
             </button>
+          </div>
+        </div>
+      </section>
+
+      {/* News Section */}
+      <section className="py-16 sm:py-20 bg-white">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="text-center mb-12">
+            <span className="text-[#F97316] text-sm font-semibold uppercase tracking-wider">Latest Updates</span>
+            <h2 className="text-3xl sm:text-4xl font-bold text-[#0B0F19] mt-2">Pakistan Travel News</h2>
+            <p className="text-gray-500 mt-3 max-w-2xl mx-auto">Stay up to date with the latest travel news, seasonal highlights, and destination guides.</p>
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            {[
+              {
+                title: 'Fairy Meadows Opens for Summer Season',
+                image: 'https://images.unsplash.com/photo-1586348943529-beaae6c28db9?w=600&q=80',
+                category: 'Destinations',
+                date: 'Apr 18, 2025',
+                excerpt: 'The iconic Fairy Meadows base camp near Nanga Parbat is now accessible as weather conditions improve. Visitors can enjoy lush green landscapes and panoramic mountain views.',
+              },
+              {
+                title: 'Hunza Valley Named Top Asian Destination',
+                image: 'https://images.unsplash.com/photo-1599236449793-2db7c0c9b2df?w=600&q=80',
+                category: 'Awards',
+                date: 'Apr 10, 2025',
+                excerpt: 'Hunza Valley has been recognised by travel publications as one of Asia\'s top hidden gems. Cherry blossom season draws visitors from across the globe each spring.',
+              },
+              {
+                title: 'New Eco-Tourism Initiative Launches in Gilgit-Baltistan',
+                image: 'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=600&q=80',
+                category: 'Eco Travel',
+                date: 'Apr 2, 2025',
+                excerpt: 'A new government-backed initiative is promoting sustainable tourism across the Northern Areas, protecting pristine wilderness while supporting local communities.',
+              },
+            ].map((news, i) => (
+              <motion.article
+                key={i}
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: i * 0.1 }}
+                className="group bg-white rounded-2xl overflow-hidden shadow-sm hover:shadow-lg transition-all duration-300 border border-gray-100"
+              >
+                <div className="relative h-48 overflow-hidden">
+                  <img
+                    src={news.image}
+                    alt={news.title}
+                    className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
+                  />
+                  <span className="absolute top-3 left-3 px-2.5 py-1 bg-[#14532D] text-white text-xs font-semibold rounded-lg">
+                    {news.category}
+                  </span>
+                </div>
+                <div className="p-5">
+                  <div className="flex items-center gap-2 text-gray-400 text-xs mb-3">
+                    <Calendar className="w-3.5 h-3.5" />
+                    {news.date}
+                  </div>
+                  <h3 className="font-bold text-[#0B0F19] mb-2 line-clamp-2 group-hover:text-[#F97316] transition-colors leading-snug">
+                    {news.title}
+                  </h3>
+                  <p className="text-gray-500 text-sm line-clamp-3 mb-4 leading-relaxed">
+                    {news.excerpt}
+                  </p>
+                  <span className="inline-flex items-center gap-1.5 text-[#F97316] text-sm font-semibold hover:gap-2.5 transition-all">
+                    Read More <ArrowRight className="w-3.5 h-3.5" />
+                  </span>
+                </div>
+              </motion.article>
+            ))}
           </div>
         </div>
       </section>
@@ -965,6 +1059,38 @@ function AboutPage() {
 // CONTACT PAGE
 // ============================================
 function ContactPage() {
+  const [form, setForm] = useState({ name: '', email: '', subject: '', message: '' });
+  const [status, setStatus] = useState<'idle' | 'loading' | 'success' | 'error'>('idle');
+  const [errorMsg, setErrorMsg] = useState('');
+
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+    setForm(prev => ({ ...prev, [e.target.name]: e.target.value }));
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setStatus('loading');
+    setErrorMsg('');
+    try {
+      const res = await fetch('/api/contact', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(form),
+      });
+      const data = await res.json();
+      if (data.success) {
+        setStatus('success');
+        setForm({ name: '', email: '', subject: '', message: '' });
+      } else {
+        setStatus('error');
+        setErrorMsg(data.message || 'Failed to send message. Please try again.');
+      }
+    } catch {
+      setStatus('error');
+      setErrorMsg('Failed to send message. Please try again later.');
+    }
+  };
+
   return (
     <div className="py-12 sm:py-16">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -974,15 +1100,55 @@ function ContactPage() {
         </div>
         <div className="max-w-2xl mx-auto">
           <div className="bg-white rounded-2xl p-8 shadow-sm border border-gray-100">
-            <form className="space-y-5" onSubmit={e => e.preventDefault()}>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div><label className="block text-sm font-medium text-gray-700 mb-1">Name</label><input type="text" className="w-full px-4 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:border-[#14532D] transition-colors" placeholder="Your name" /></div>
-                <div><label className="block text-sm font-medium text-gray-700 mb-1">Email</label><input type="email" className="w-full px-4 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:border-[#14532D] transition-colors" placeholder="you@example.com" /></div>
+            {status === 'success' ? (
+              <div className="text-center py-8">
+                <div className="w-14 h-14 bg-emerald-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                  <CheckCircle2 className="w-7 h-7 text-emerald-600" />
+                </div>
+                <h3 className="text-xl font-bold text-[#0B0F19] mb-2">Message Sent!</h3>
+                <p className="text-gray-500 text-sm mb-6">We&apos;ll get back to you as soon as possible.</p>
+                <button
+                  onClick={() => setStatus('idle')}
+                  className="px-6 py-2.5 bg-[#14532D] hover:bg-[#0D3B1F] text-white font-semibold rounded-xl text-sm transition-colors"
+                >
+                  Send Another
+                </button>
               </div>
-              <div><label className="block text-sm font-medium text-gray-700 mb-1">Subject</label><input type="text" className="w-full px-4 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:border-[#14532D] transition-colors" placeholder="How can we help?" /></div>
-              <div><label className="block text-sm font-medium text-gray-700 mb-1">Message</label><textarea rows={5} className="w-full px-4 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:border-[#14532D] transition-colors resize-none" placeholder="Tell us more..." /></div>
-              <button type="submit" className="w-full py-3 bg-[#F97316] hover:bg-[#EA6D0E] text-white font-semibold rounded-xl transition-colors">Send Message</button>
-            </form>
+            ) : (
+              <form className="space-y-5" onSubmit={handleSubmit}>
+                {status === 'error' && (
+                  <div className="flex items-center gap-2 bg-red-50 border border-red-200 text-red-700 rounded-xl px-4 py-3 text-sm">
+                    <AlertCircle className="w-4 h-4 flex-shrink-0" />
+                    {errorMsg}
+                  </div>
+                )}
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Name</label>
+                    <input name="name" required value={form.name} onChange={handleChange} type="text" className="w-full px-4 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:border-[#14532D] transition-colors" placeholder="Your name" />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Email</label>
+                    <input name="email" required value={form.email} onChange={handleChange} type="email" className="w-full px-4 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:border-[#14532D] transition-colors" placeholder="you@example.com" />
+                  </div>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Subject</label>
+                  <input name="subject" required value={form.subject} onChange={handleChange} type="text" className="w-full px-4 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:border-[#14532D] transition-colors" placeholder="How can we help?" />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Message</label>
+                  <textarea name="message" required value={form.message} onChange={handleChange} rows={5} className="w-full px-4 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:border-[#14532D] transition-colors resize-none" placeholder="Tell us more..." />
+                </div>
+                <button
+                  type="submit"
+                  disabled={status === 'loading'}
+                  className="w-full py-3 bg-[#F97316] hover:bg-[#EA6D0E] disabled:opacity-60 text-white font-semibold rounded-xl transition-colors flex items-center justify-center gap-2"
+                >
+                  {status === 'loading' ? <><Loader2 className="w-4 h-4 animate-spin" />Sending...</> : 'Send Message'}
+                </button>
+              </form>
+            )}
           </div>
         </div>
       </div>
@@ -1101,8 +1267,8 @@ function AdminPanel({
 // ADMIN LOGIN PAGE
 // ============================================
 function AdminLoginPage({ onLogin, onBack }: { onLogin: (email: string, password: string) => Promise<boolean>; onBack: () => void }) {
-  const [email, setEmail] = useState('admin@hiddenpak.com');
-  const [password, setPassword] = useState('admin123');
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
 
@@ -1163,7 +1329,6 @@ function AdminLoginPage({ onLogin, onBack }: { onLogin: (email: string, password
               {loading ? <><Loader2 className="w-4 h-4 animate-spin" />Signing in...</> : 'Sign In'}
             </button>
           </form>
-          <p className="text-[#6B7280] text-xs mt-4 text-center">Demo: admin@hiddenpak.com / admin123</p>
         </div>
       </div>
     </div>
@@ -1260,13 +1425,24 @@ function AdminDashboard({ places, blogs, galleryImages, analytics, navigate }: {
 function AdminBlogs({ blogs, fetchData }: { blogs: Blog[]; fetchData: () => void }) {
   const [deleting, setDeleting] = useState<string | null>(null);
 
+  const getAuthHeader = () => {
+    try {
+      const stored = sessionStorage.getItem('hiddenpak_admin');
+      if (stored) {
+        const user = JSON.parse(stored);
+        if (user.token) return { Authorization: `Bearer ${user.token}` };
+      }
+    } catch { /* ignore */ }
+    return {};
+  };
+
   const handleDelete = async (id: string) => {
     if (!confirm('Are you sure you want to delete this blog?')) return;
     setDeleting(id);
     try {
-      await fetch(`/api/blogs/${id}`, { method: 'DELETE' });
+      await fetch(`/api/blogs/${id}`, { method: 'DELETE', headers: getAuthHeader() });
       await fetchData();
-    } catch (err) { console.error('Delete failed:', err); }
+    } catch { /* ignore */ }
     finally { setDeleting(null); }
   };
 
@@ -1318,13 +1494,24 @@ function AdminBlogs({ blogs, fetchData }: { blogs: Blog[]; fetchData: () => void
 function AdminPlaces({ places, fetchData }: { places: Place[]; fetchData: () => void }) {
   const [deleting, setDeleting] = useState<string | null>(null);
 
+  const getAuthHeader = () => {
+    try {
+      const stored = sessionStorage.getItem('hiddenpak_admin');
+      if (stored) {
+        const user = JSON.parse(stored);
+        if (user.token) return { Authorization: `Bearer ${user.token}` };
+      }
+    } catch { /* ignore */ }
+    return {};
+  };
+
   const handleDelete = async (id: string) => {
     if (!confirm('Are you sure you want to delete this place?')) return;
     setDeleting(id);
     try {
-      await fetch(`/api/places/${id}`, { method: 'DELETE' });
+      await fetch(`/api/places/${id}`, { method: 'DELETE', headers: getAuthHeader() });
       await fetchData();
-    } catch (err) { console.error('Delete failed:', err); }
+    } catch { /* ignore */ }
     finally { setDeleting(null); }
   };
 
@@ -1369,13 +1556,24 @@ function AdminPlaces({ places, fetchData }: { places: Place[]; fetchData: () => 
 function AdminGallery({ images, fetchData }: { images: GalleryImage[]; fetchData: () => void }) {
   const [deleting, setDeleting] = useState<string | null>(null);
 
+  const getAuthHeader = () => {
+    try {
+      const stored = sessionStorage.getItem('hiddenpak_admin');
+      if (stored) {
+        const user = JSON.parse(stored);
+        if (user.token) return { Authorization: `Bearer ${user.token}` };
+      }
+    } catch { /* ignore */ }
+    return {};
+  };
+
   const handleDelete = async (id: string) => {
     if (!confirm('Are you sure you want to delete this image?')) return;
     setDeleting(id);
     try {
-      await fetch(`/api/gallery/${id}`, { method: 'DELETE' });
+      await fetch(`/api/gallery/${id}`, { method: 'DELETE', headers: getAuthHeader() });
       await fetchData();
-    } catch (err) { console.error('Delete failed:', err); }
+    } catch { /* ignore */ }
     finally { setDeleting(null); }
   };
 
@@ -1412,58 +1610,66 @@ function AdminGallery({ images, fetchData }: { images: GalleryImage[]; fetchData
 function AdminAnalytics({ analytics }: { analytics: AnalyticsData | null }) {
   if (!analytics) return <div className="text-[#6B7280] text-center py-12">Loading analytics...</div>;
 
-  const data = [
-    { label: 'Total Blogs', value: analytics.totalBlogs, color: 'emerald' },
-    { label: 'Total Places', value: analytics.totalPlaces, color: 'orange' },
-    { label: 'Gallery Photos', value: analytics.totalGallery, color: 'purple' },
-    { label: 'Testimonials', value: analytics.totalTestimonials, color: 'teal' },
-  ];
-
   return (
     <div>
-      <div className="mb-6"><h2 className="text-xl font-bold text-white">Analytics Overview</h2><p className="text-[#6B7280] text-sm">Platform performance and statistics</p></div>
-      <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-5 mb-8">
-        {data.map(d => (
-          <div key={d.label} className="bg-[#111827] rounded-2xl border border-[#1F2937] p-6">
-            <p className="text-sm text-[#6B7280] mb-2">{d.label}</p>
-            <p className="text-4xl font-bold text-white">{d.value}</p>
-          </div>
-        ))}
+      <div className="mb-6">
+        <h2 className="text-xl font-bold text-white">Analytics Overview</h2>
+        <p className="text-[#6B7280] text-sm">Platform event tracking and statistics</p>
       </div>
 
-      {analytics.featuredPlaces.length > 0 && (
+      <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-5 mb-8">
+        <div className="bg-[#111827] rounded-2xl border border-[#1F2937] p-6">
+          <p className="text-sm text-[#6B7280] mb-2">Total Events Tracked</p>
+          <p className="text-4xl font-bold text-white">{analytics.totalEvents}</p>
+        </div>
+        <div className="bg-[#111827] rounded-2xl border border-[#1F2937] p-6">
+          <p className="text-sm text-[#6B7280] mb-2">Event Types</p>
+          <p className="text-4xl font-bold text-white">{analytics.eventTypes.length}</p>
+        </div>
+        <div className="bg-[#111827] rounded-2xl border border-[#1F2937] p-6">
+          <p className="text-sm text-[#6B7280] mb-2">Recent Events (last 10)</p>
+          <p className="text-4xl font-bold text-white">{analytics.recentEvents.length}</p>
+        </div>
+      </div>
+
+      {analytics.eventTypes.length > 0 && (
         <div className="bg-[#111827] rounded-2xl border border-[#1F2937] p-6 mb-6">
-          <h3 className="text-lg font-bold text-white mb-4">Featured Destinations</h3>
+          <h3 className="text-lg font-bold text-white mb-4">Events by Type</h3>
           <div className="space-y-3">
-            {analytics.featuredPlaces.map(place => (
-              <div key={place.id} className="flex items-center gap-4 p-3 bg-[#1F2937]/50 rounded-xl">
-                <img src={place.image} alt={place.name} className="w-12 h-12 rounded-lg object-cover" />
+            {analytics.eventTypes.map(et => (
+              <div key={et._id} className="flex items-center gap-4 p-3 bg-[#1F2937]/50 rounded-xl">
                 <div className="flex-1 min-w-0">
-                  <p className="text-white font-medium text-sm">{place.name}</p>
-                  <p className="text-[#6B7280] text-xs">{place.region} • {place.category}</p>
+                  <p className="text-white font-medium text-sm">{et._id}</p>
                 </div>
-                <div className="flex items-center gap-1"><Star className="w-3 h-3 text-yellow-400 fill-yellow-400" /><span className="text-white text-sm">{place.rating}</span></div>
+                <span className="px-3 py-1 bg-[#14532D]/20 text-emerald-400 rounded-lg text-sm font-bold">{et.count}</span>
               </div>
             ))}
           </div>
         </div>
       )}
 
-      {analytics.recentBlogs.length > 0 && (
+      {analytics.recentEvents.length > 0 && (
         <div className="bg-[#111827] rounded-2xl border border-[#1F2937] p-6">
-          <h3 className="text-lg font-bold text-white mb-4">Recent Blog Activity</h3>
-          <div className="space-y-3">
-            {analytics.recentBlogs.map(blog => (
-              <div key={blog.id} className="flex items-center gap-4 p-3 bg-[#1F2937]/50 rounded-xl">
-                <img src={blog.coverImage} alt={blog.title} className="w-12 h-12 rounded-lg object-cover" />
+          <h3 className="text-lg font-bold text-white mb-4">Recent Events</h3>
+          <div className="space-y-2">
+            {analytics.recentEvents.map((ev, i) => (
+              <div key={i} className="flex items-center gap-4 p-3 bg-[#1F2937]/50 rounded-xl">
                 <div className="flex-1 min-w-0">
-                  <p className="text-white font-medium text-sm truncate">{blog.title}</p>
-                  <p className="text-[#6B7280] text-xs">{blog.author} • {blog.date}</p>
+                  <p className="text-white font-medium text-sm">{ev.eventType}</p>
+                  <p className="text-[#6B7280] text-xs">{ev.page}</p>
                 </div>
-                <span className={`px-2 py-0.5 rounded-lg text-xs font-medium ${blog.published ? 'bg-emerald-500/10 text-emerald-400' : 'bg-yellow-500/10 text-yellow-400'}`}>{blog.published ? 'Published' : 'Draft'}</span>
+                <span className="text-[#6B7280] text-xs whitespace-nowrap">
+                  {ev.timestamp ? new Date(ev.timestamp).toLocaleDateString() : ''}
+                </span>
               </div>
             ))}
           </div>
+        </div>
+      )}
+
+      {analytics.totalEvents === 0 && (
+        <div className="bg-[#111827] rounded-2xl border border-[#1F2937] p-12 text-center text-[#6B7280]">
+          No analytics events tracked yet.
         </div>
       )}
     </div>
@@ -1485,10 +1691,22 @@ function AdminSettings() {
   const handleSave = async () => {
     setSaving(true);
     try {
-      await fetch('/api/settings', { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(settings) });
+      let authHeader = '';
+      try {
+        const stored = sessionStorage.getItem('hiddenpak_admin');
+        if (stored) {
+          const user = JSON.parse(stored);
+          if (user.token) authHeader = `Bearer ${user.token}`;
+        }
+      } catch { /* ignore */ }
+      await fetch('/api/settings', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json', ...(authHeader ? { Authorization: authHeader } : {}) },
+        body: JSON.stringify(settings),
+      });
       setSaved(true);
       setTimeout(() => setSaved(false), 2000);
-    } catch (err) { console.error('Save failed:', err); }
+    } catch { /* ignore */ }
     finally { setSaving(false); }
   };
 

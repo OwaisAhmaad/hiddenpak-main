@@ -20,7 +20,9 @@ export async function PUT(
   try {
     const { id } = await params;
     const data = await req.json();
-    const result = await api.put(`/places/${id}`, data);
+    const authHeader = req.headers.get('Authorization');
+    const headers = authHeader ? { Authorization: authHeader } : undefined;
+    const result = await api.put(`/places/${id}`, data, headers);
     if (!result.success) {
       return NextResponse.json(result, { status: 500 });
     }
@@ -34,11 +36,13 @@ export async function PUT(
 }
 
 export async function DELETE(
-  _req: NextRequest,
+  req: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
   const { id } = await params;
-  const result = await api.delete(`/places/${id}`);
+  const authHeader = req.headers.get('Authorization');
+  const headers = authHeader ? { Authorization: authHeader } : undefined;
+  const result = await api.delete(`/places/${id}`, headers);
   if (!result.success) {
     return NextResponse.json(result, { status: 500 });
   }

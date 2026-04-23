@@ -12,13 +12,14 @@ export async function GET() {
 export async function POST(req: NextRequest) {
   try {
     const data = await req.json();
-    const result = await api.post('/blogs', data);
+    const authHeader = req.headers.get('Authorization');
+    const headers = authHeader ? { Authorization: authHeader } : undefined;
+    const result = await api.post('/blogs', data, headers);
     if (!result.success) {
       return NextResponse.json(result, { status: 500 });
     }
     return NextResponse.json(result, { status: 201 });
   } catch (error) {
-    console.error('Error creating blog:', error);
     return NextResponse.json(
       { success: false, message: 'Failed to create blog' },
       { status: 500 }
