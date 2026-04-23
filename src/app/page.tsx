@@ -1,5 +1,8 @@
 'use client';
 
+const BACKEND = (process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api').replace(/\/api$/, '');
+const API = `${BACKEND}/api`;
+
 import { useState, useEffect, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
@@ -70,8 +73,8 @@ export default function HiddenPakApp() {
     try {
       setFetchError(null);
       const [placesRes, blogsRes, galleryRes, testimonialsRes] = await Promise.all([
-        fetch('/api/places'), fetch('/api/blogs'),
-        fetch('/api/gallery'), fetch('/api/testimonials')
+        fetch(`${API}/places`), fetch(`${API}/blogs`),
+        fetch(`${API}/gallery`), fetch(`${API}/testimonials`)
       ]);
       const [placesData, blogsData, galleryData, testimonialsData] = await Promise.all([
         placesRes.json(), blogsRes.json(), galleryRes.json(), testimonialsRes.json()
@@ -93,7 +96,7 @@ export default function HiddenPakApp() {
 
   const fetchAnalytics = useCallback(async () => {
     try {
-      const res = await fetch('/api/analytics');
+      const res = await fetch(`${API}/analytics`);
       const data = await res.json();
       if (data.success) setAnalytics(data.data);
     } catch { /* silent */ }
@@ -122,7 +125,7 @@ export default function HiddenPakApp() {
   };
 
   const handleLogin = async (email: string, password: string) => {
-    const res = await fetch('/api/auth/login', {
+    const res = await fetch(`${API}/auth/login`, {
       method: 'POST', headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ email, password }),
     });
@@ -1095,7 +1098,7 @@ function ContactPage() {
     setStatus('loading');
     setErrorMsg('');
     try {
-      const res = await fetch('/api/contact', {
+      const res = await fetch(`${API}/contact`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(form),
@@ -1463,7 +1466,7 @@ function AdminBlogs({ blogs, fetchData }: { blogs: Blog[]; fetchData: () => void
     if (!confirm('Are you sure you want to delete this blog?')) return;
     setDeleting(id);
     try {
-      await fetch(`/api/blogs/${id}`, { method: 'DELETE', headers: getAuthHeader() });
+      await fetch(`${API}/blogs/${id}`, { method: 'DELETE', headers: getAuthHeader() });
       await fetchData();
     } catch { /* ignore */ }
     finally { setDeleting(null); }
@@ -1532,7 +1535,7 @@ function AdminPlaces({ places, fetchData }: { places: Place[]; fetchData: () => 
     if (!confirm('Are you sure you want to delete this place?')) return;
     setDeleting(id);
     try {
-      await fetch(`/api/places/${id}`, { method: 'DELETE', headers: getAuthHeader() });
+      await fetch(`${API}/places/${id}`, { method: 'DELETE', headers: getAuthHeader() });
       await fetchData();
     } catch { /* ignore */ }
     finally { setDeleting(null); }
@@ -1594,7 +1597,7 @@ function AdminGallery({ images, fetchData }: { images: GalleryImage[]; fetchData
     if (!confirm('Are you sure you want to delete this image?')) return;
     setDeleting(id);
     try {
-      await fetch(`/api/gallery/${id}`, { method: 'DELETE', headers: getAuthHeader() });
+      await fetch(`${API}/gallery/${id}`, { method: 'DELETE', headers: getAuthHeader() });
       await fetchData();
     } catch { /* ignore */ }
     finally { setDeleting(null); }
@@ -1708,7 +1711,7 @@ function AdminSettings() {
   const [saved, setSaved] = useState(false);
 
   useEffect(() => {
-    fetch('/api/settings').then(r => r.json()).then(d => { if (d.success) setSettings(d.data); });
+    fetch(`${API}/settings`).then(r => r.json()).then(d => { if (d.success) setSettings(d.data); });
   }, []);
 
   const handleSave = async () => {
@@ -1722,7 +1725,7 @@ function AdminSettings() {
           if (user.token) authHeader = `Bearer ${user.token}`;
         }
       } catch { /* ignore */ }
-      await fetch('/api/settings', {
+      await fetch(`${API}/settings`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json', ...(authHeader ? { Authorization: authHeader } : {}) },
         body: JSON.stringify(settings),
