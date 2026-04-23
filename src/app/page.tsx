@@ -438,11 +438,13 @@ function HomePage({ navigate, places, blogs, galleryImages, testimonials, setSel
     <div>
       {/* Hero */}
       <section className="relative w-full min-h-screen flex items-center overflow-hidden">
-        {/* Full-width cinematic background */}
+        {/* Full-width cinematic background — preloaded for LCP */}
         <img
           src="/images/rectangle-39389.png"
           alt="Woman hiking in the mountains of northern Pakistan"
           className="absolute inset-0 w-full h-full object-cover object-center"
+          fetchPriority="high"
+          decoding="sync"
         />
         {/* Soft gradient overlay for text readability */}
         <div className="absolute inset-0 bg-gradient-to-b from-black/55 via-black/45 to-black/60" />
@@ -525,6 +527,8 @@ function HomePage({ navigate, places, blogs, galleryImages, testimonials, setSel
                 src="/images/hiking-woman.png"
                 alt="Explorer with backpack ready to discover Pakistan"
                 className="h-[85vh] max-h-[700px] w-auto object-contain object-bottom select-none pointer-events-none drop-shadow-[0_0_40px_rgba(0,0,0,0.5)]"
+                fetchPriority="high"
+                decoding="async"
               />
             </motion.div>
 
@@ -570,7 +574,7 @@ function HomePage({ navigate, places, blogs, galleryImages, testimonials, setSel
                 className="group bg-white rounded-2xl overflow-hidden shadow-sm hover:shadow-lg transition-all duration-300 border border-gray-100"
               >
                 <div className="relative h-48 overflow-hidden">
-                  <img src={place.image} alt={place.name} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" />
+                  <img src={place.image} alt={place.name} loading="lazy" decoding="async" className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" />
                   <div className="absolute top-3 left-3">
                     <span className="px-2.5 py-1 bg-white/90 backdrop-blur-sm rounded-lg text-xs font-semibold text-[#14532D]">{place.category}</span>
                   </div>
@@ -627,7 +631,7 @@ function HomePage({ navigate, places, blogs, galleryImages, testimonials, setSel
                 onClick={() => { setSelectedBlogId(blog.id); navigate('blog-detail'); }}
               >
                 <div className="relative h-48 overflow-hidden">
-                  <img src={blog.coverImage} alt={blog.title} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" />
+                  <img src={blog.coverImage} alt={blog.title} loading="lazy" decoding="async" className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" />
                   <div className="absolute top-3 left-3">
                     <span className="px-2.5 py-1 bg-[#F97316] rounded-lg text-xs font-semibold text-white">{blog.category}</span>
                   </div>
@@ -890,7 +894,7 @@ function PlacesPage({ places }: { places: Place[] }) {
               className="group bg-white rounded-2xl overflow-hidden shadow-sm hover:shadow-lg transition-all duration-300 border border-gray-100"
             >
               <div className="relative h-56 overflow-hidden">
-                <img src={place.image} alt={place.name} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" />
+                <img src={place.image} alt={place.name} loading="lazy" decoding="async" className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" />
                 <div className="absolute top-3 left-3 flex items-center gap-2">
                   <span className="px-2.5 py-1 bg-white/90 backdrop-blur-sm rounded-lg text-xs font-semibold text-[#14532D]">{place.category}</span>
                   {place.featured && <span className="px-2.5 py-1 bg-[#F97316] rounded-lg text-xs font-semibold text-white">Featured</span>}
@@ -945,7 +949,7 @@ function BlogsPage({ blogs, navigate, setSelectedBlogId }: { blogs: Blog[]; navi
           {filtered.map((blog, i) => (
             <motion.article key={blog.id} initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.05 }} className="group bg-white rounded-2xl overflow-hidden shadow-sm hover:shadow-lg transition-all duration-300 border border-gray-100 cursor-pointer" onClick={() => { setSelectedBlogId(blog.id); navigate('blog-detail'); }}>
               <div className="relative h-48 overflow-hidden">
-                <img src={blog.coverImage} alt={blog.title} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" />
+                <img src={blog.coverImage} alt={blog.title} loading="lazy" decoding="async" className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" />
                 <span className="absolute top-3 left-3 px-2.5 py-1 bg-[#F97316] rounded-lg text-xs font-semibold text-white">{blog.category}</span>
               </div>
               <div className="p-5">

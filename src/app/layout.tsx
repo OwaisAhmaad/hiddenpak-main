@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import { Toaster } from "@/components/ui/toaster";
@@ -6,35 +6,46 @@ import { Toaster } from "@/components/ui/toaster";
 const geistSans = Geist({
   variable: "--font-geist-sans",
   subsets: ["latin"],
+  display: "swap",
 });
 
 const geistMono = Geist_Mono({
   variable: "--font-geist-mono",
   subsets: ["latin"],
+  display: "swap",
 });
+
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
+  themeColor: "#14532D",
+};
 
 export const metadata: Metadata = {
   title: {
-    default: "HiddenPak - Discover Pakistan's Hidden Gems",
+    default: "HiddenPak — Discover Pakistan's Hidden Gems",
     template: "%s | HiddenPak",
   },
   description:
-    "Travel deeper. Discover hidden beauty. Your gateway to Pakistan's most beautiful and hidden places — from majestic peaks to serene valleys, rich cultures, and timeless heritage.",
+    "Travel deeper. Discover hidden beauty. Your gateway to Pakistan's most beautiful hidden places — from majestic peaks and serene valleys to rich cultures and timeless heritage.",
   keywords: [
-    "Pakistan",
-    "Travel Pakistan",
-    "Hidden Gems Pakistan",
-    "Pakistan Tourism",
+    "Pakistan travel",
+    "hidden gems Pakistan",
+    "Pakistan tourism",
     "Hunza Valley",
     "Fairy Meadows",
     "Skardu",
     "Gilgit-Baltistan",
     "Swat Valley",
     "Naran Kaghan",
-    "Pakistan Travel Guide",
-    "Tour Pakistan",
-    "Explore Pakistan",
+    "Pakistan travel guide",
+    "tour Pakistan",
+    "northern Pakistan",
+    "explore Pakistan",
     "HiddenPak",
+    "Abbottabad tourism",
+    "Karakoram Highway",
+    "K2 base camp",
   ],
   authors: [{ name: "HiddenPak", url: "https://hiddenpak.com" }],
   creator: "HiddenPak",
@@ -48,27 +59,28 @@ export const metadata: Metadata = {
     locale: "en_US",
     url: "https://hiddenpak.com",
     siteName: "HiddenPak",
-    title: "HiddenPak - Discover Pakistan's Hidden Gems",
+    title: "HiddenPak — Discover Pakistan's Hidden Gems",
     description:
-      "Travel deeper. Discover hidden beauty. Your gateway to Pakistan's most beautiful and hidden places.",
+      "Travel deeper. Discover hidden beauty. Your gateway to Pakistan's most beautiful hidden places — majestic peaks, serene valleys, rich cultures.",
     images: [
       {
         url: "https://images.unsplash.com/photo-1569383746724-6f1b882b8f46?w=1200&q=80",
         width: 1200,
         height: 630,
-        alt: "HiddenPak - Pakistan's Hidden Gems",
+        alt: "HiddenPak — Pakistan's Hidden Gems",
       },
     ],
   },
   twitter: {
     card: "summary_large_image",
-    title: "HiddenPak - Discover Pakistan's Hidden Gems",
+    site: "@hiddenpak",
+    creator: "@hiddenpak",
+    title: "HiddenPak — Discover Pakistan's Hidden Gems",
     description:
-      "Travel deeper. Discover hidden beauty. Your gateway to Pakistan's most beautiful and hidden places.",
+      "Travel deeper. Your gateway to Pakistan's most beautiful hidden places.",
     images: [
       "https://images.unsplash.com/photo-1569383746724-6f1b882b8f46?w=1200&q=80",
     ],
-    creator: "@hiddenpak",
   },
   robots: {
     index: true,
@@ -82,12 +94,63 @@ export const metadata: Metadata = {
     },
   },
   icons: {
-    icon: [
-      { url: "/hiddenpak-logo.svg", type: "image/svg+xml" },
-    ],
+    icon: [{ url: "/hiddenpak-logo.svg", type: "image/svg+xml" }],
     shortcut: "/hiddenpak-logo.svg",
     apple: "/hiddenpak-logo.svg",
   },
+  category: "travel",
+};
+
+const schemaOrg = {
+  "@context": "https://schema.org",
+  "@graph": [
+    {
+      "@type": "TravelAgency",
+      "@id": "https://hiddenpak.com/#organization",
+      name: "HiddenPak",
+      description:
+        "Your gateway to Pakistan's most beautiful and hidden places — from majestic peaks to serene valleys.",
+      url: "https://hiddenpak.com",
+      logo: {
+        "@type": "ImageObject",
+        url: "https://hiddenpak.com/hiddenpak-logo.svg",
+      },
+      contactPoint: {
+        "@type": "ContactPoint",
+        telephone: "+92-311-9142765",
+        contactType: "customer service",
+        availableLanguage: ["English", "Urdu"],
+      },
+      areaServed: {
+        "@type": "Country",
+        name: "Pakistan",
+      },
+      sameAs: [
+        "https://www.facebook.com/hiddenpak",
+        "https://www.instagram.com/hiddenpak",
+        "https://x.com/hiddenpak",
+        "https://www.pinterest.com/hiddenpak",
+        "https://www.youtube.com/@hiddenpak",
+        "https://www.tiktok.com/@hiddenpak",
+      ],
+    },
+    {
+      "@type": "WebSite",
+      "@id": "https://hiddenpak.com/#website",
+      url: "https://hiddenpak.com",
+      name: "HiddenPak",
+      description: "Discover Pakistan's Hidden Gems",
+      publisher: { "@id": "https://hiddenpak.com/#organization" },
+      potentialAction: {
+        "@type": "SearchAction",
+        target: {
+          "@type": "EntryPoint",
+          urlTemplate: "https://hiddenpak.com/?q={search_term_string}",
+        },
+        "query-input": "required name=search_term_string",
+      },
+    },
+  ],
 };
 
 export default function RootLayout({
@@ -99,31 +162,19 @@ export default function RootLayout({
     <html lang="en" suppressHydrationWarning>
       <head>
         <link rel="canonical" href="https://hiddenpak.com" />
+        {/* Preload hero background image for LCP */}
+        <link
+          rel="preload"
+          as="image"
+          href="/images/rectangle-39389.png"
+          fetchPriority="high"
+        />
+        {/* DNS prefetch for external resources */}
+        <link rel="dns-prefetch" href="//images.unsplash.com" />
+        <link rel="dns-prefetch" href="//fonts.googleapis.com" />
         <script
           type="application/ld+json"
-          dangerouslySetInnerHTML={{
-            __html: JSON.stringify({
-              "@context": "https://schema.org",
-              "@type": "TravelAgency",
-              name: "HiddenPak",
-              description:
-                "Your gateway to Pakistan's most beautiful and hidden places — from majestic peaks to serene valleys.",
-              url: "https://hiddenpak.com",
-              logo: "https://hiddenpak.com/logo.png",
-              sameAs: [
-                "https://www.facebook.com/hiddenpak",
-                "https://www.instagram.com/hiddenpak",
-                "https://x.com/hiddenpak",
-                "https://www.pinterest.com/hiddenpak",
-                "https://www.youtube.com/@hiddenpak",
-                "https://www.tiktok.com/@hiddenpak",
-              ],
-              address: {
-                "@type": "PostalAddress",
-                addressCountry: "PK",
-              },
-            }),
-          }}
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(schemaOrg) }}
         />
       </head>
       <body
