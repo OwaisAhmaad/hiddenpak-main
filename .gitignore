@@ -82,3 +82,7 @@ bun.lock
 agent-ctx/
 /mini-services/
 /scripts/
+
+# Claude Code skills (not part of the project)
+/skills/
+dev.log
