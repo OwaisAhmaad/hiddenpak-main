@@ -96,7 +96,9 @@ export default function HiddenPakApp() {
 
   const fetchAnalytics = useCallback(async () => {
     try {
-      const res = await fetch(`${API}/analytics`);
+      let token = '';
+      try { const s = sessionStorage.getItem('hiddenpak_admin'); if (s) { const u = JSON.parse(s); if (u.token) token = u.token; } } catch { /* ignore */ }
+      const res = await fetch(`${API}/analytics`, { headers: token ? { Authorization: `Bearer ${token}` } : {} });
       const data = await res.json();
       if (data.success) setAnalytics(data.data);
     } catch { /* silent */ }
@@ -1450,16 +1452,18 @@ function AdminDashboard({ places, blogs, galleryImages, analytics, navigate }: {
 // ============================================
 function AdminBlogs({ blogs, fetchData }: { blogs: Blog[]; fetchData: () => void }) {
   const [deleting, setDeleting] = useState<string | null>(null);
+  const [showModal, setShowModal] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [saveError, setSaveError] = useState('');
+  const emptyBlog = { title: '', slug: '', excerpt: '', content: '', coverImage: '', author: '', category: '', tags: '', published: false };
+  const [form, setForm] = useState(emptyBlog);
 
   const getAuthHeader = () => {
     try {
       const stored = sessionStorage.getItem('hiddenpak_admin');
-      if (stored) {
-        const user = JSON.parse(stored);
-        if (user.token) return { Authorization: `Bearer ${user.token}` };
-      }
+      if (stored) { const user = JSON.parse(stored); if (user.token) return { Authorization: `Bearer ${user.token}`, 'Content-Type': 'application/json' }; }
     } catch { /* ignore */ }
-    return {};
+    return { 'Content-Type': 'application/json' };
   };
 
   const handleDelete = async (id: string) => {
@@ -1472,11 +1476,52 @@ function AdminBlogs({ blogs, fetchData }: { blogs: Blog[]; fetchData: () => void
     finally { setDeleting(null); }
   };
 
+  const handleCreate = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setSaving(true); setSaveError('');
+    try {
+      const payload = { ...form, slug: form.slug || form.title.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, ''), tags: form.tags ? form.tags.split(',').map((t: string) => t.trim()).filter(Boolean) : [], date: new Date().toISOString().split('T')[0] };
+      const res = await fetch(`${API}/blogs`, { method: 'POST', headers: getAuthHeader(), body: JSON.stringify(payload) });
+      const data = await res.json();
+      if (data.success) { setShowModal(false); setForm(emptyBlog); await fetchData(); }
+      else setSaveError(data.message || data.error || 'Failed to create blog');
+    } catch { setSaveError('Network error. Please try again.'); }
+    finally { setSaving(false); }
+  };
+
   return (
     <div>
+      {showModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm">
+          <div className="bg-[#111827] border border-[#1F2937] rounded-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto">
+            <div className="flex items-center justify-between p-6 border-b border-[#1F2937]">
+              <h3 className="text-lg font-bold text-white">New Blog Post</h3>
+              <button onClick={() => setShowModal(false)} className="p-2 hover:bg-[#1F2937] rounded-lg text-[#6B7280] hover:text-white transition-colors"><X className="w-5 h-5" /></button>
+            </div>
+            <form onSubmit={handleCreate} className="p-6 space-y-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div className="sm:col-span-2"><label className="block text-xs text-[#6B7280] mb-1">Title *</label><input required value={form.title} onChange={e => setForm(f => ({ ...f, title: e.target.value }))} className="w-full bg-[#1F2937] border border-[#374151] rounded-xl px-4 py-2.5 text-white text-sm focus:outline-none focus:border-[#F97316]" placeholder="Amazing trek in Hunza..." /></div>
+                <div><label className="block text-xs text-[#6B7280] mb-1">Slug (auto if empty)</label><input value={form.slug} onChange={e => setForm(f => ({ ...f, slug: e.target.value }))} className="w-full bg-[#1F2937] border border-[#374151] rounded-xl px-4 py-2.5 text-white text-sm focus:outline-none focus:border-[#F97316]" placeholder="amazing-trek-hunza" /></div>
+                <div><label className="block text-xs text-[#6B7280] mb-1">Author</label><input value={form.author} onChange={e => setForm(f => ({ ...f, author: e.target.value }))} className="w-full bg-[#1F2937] border border-[#374151] rounded-xl px-4 py-2.5 text-white text-sm focus:outline-none focus:border-[#F97316]" placeholder="Ahmed Khan" /></div>
+                <div><label className="block text-xs text-[#6B7280] mb-1">Category</label><input value={form.category} onChange={e => setForm(f => ({ ...f, category: e.target.value }))} className="w-full bg-[#1F2937] border border-[#374151] rounded-xl px-4 py-2.5 text-white text-sm focus:outline-none focus:border-[#F97316]" placeholder="Trekking" /></div>
+                <div><label className="block text-xs text-[#6B7280] mb-1">Tags (comma separated)</label><input value={form.tags} onChange={e => setForm(f => ({ ...f, tags: e.target.value }))} className="w-full bg-[#1F2937] border border-[#374151] rounded-xl px-4 py-2.5 text-white text-sm focus:outline-none focus:border-[#F97316]" placeholder="hunza, trek, mountain" /></div>
+                <div className="sm:col-span-2"><label className="block text-xs text-[#6B7280] mb-1">Cover Image URL</label><input value={form.coverImage} onChange={e => setForm(f => ({ ...f, coverImage: e.target.value }))} className="w-full bg-[#1F2937] border border-[#374151] rounded-xl px-4 py-2.5 text-white text-sm focus:outline-none focus:border-[#F97316]" placeholder="https://images.unsplash.com/..." /></div>
+                <div className="sm:col-span-2"><label className="block text-xs text-[#6B7280] mb-1">Excerpt</label><textarea value={form.excerpt} onChange={e => setForm(f => ({ ...f, excerpt: e.target.value }))} rows={2} className="w-full bg-[#1F2937] border border-[#374151] rounded-xl px-4 py-2.5 text-white text-sm focus:outline-none focus:border-[#F97316] resize-none" placeholder="Brief description..." /></div>
+                <div className="sm:col-span-2"><label className="block text-xs text-[#6B7280] mb-1">Content</label><textarea value={form.content} onChange={e => setForm(f => ({ ...f, content: e.target.value }))} rows={5} className="w-full bg-[#1F2937] border border-[#374151] rounded-xl px-4 py-2.5 text-white text-sm focus:outline-none focus:border-[#F97316] resize-none" placeholder="Full blog content..." /></div>
+                <div className="sm:col-span-2 flex items-center gap-3"><input type="checkbox" id="blog-published" checked={form.published} onChange={e => setForm(f => ({ ...f, published: e.target.checked }))} className="w-4 h-4 accent-[#F97316]" /><label htmlFor="blog-published" className="text-sm text-[#9CA3AF]">Publish immediately</label></div>
+              </div>
+              {saveError && <p className="text-red-400 text-sm">{saveError}</p>}
+              <div className="flex gap-3 pt-2">
+                <button type="button" onClick={() => setShowModal(false)} className="flex-1 px-4 py-2.5 bg-[#1F2937] text-[#9CA3AF] rounded-xl text-sm font-medium hover:bg-[#374151] transition-colors">Cancel</button>
+                <button type="submit" disabled={saving} className="flex-1 px-4 py-2.5 bg-[#F97316] hover:bg-[#EA6D0E] text-white rounded-xl text-sm font-semibold transition-colors disabled:opacity-60 flex items-center justify-center gap-2">{saving ? <><Loader2 className="w-4 h-4 animate-spin" />Saving...</> : 'Create Post'}</button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
       <div className="flex items-center justify-between mb-6">
         <div><h2 className="text-xl font-bold text-white">Blog Posts</h2><p className="text-[#6B7280] text-sm">Manage your travel blog content</p></div>
-        <button className="px-4 py-2 bg-[#F97316] hover:bg-[#EA6D0E] text-white font-semibold rounded-xl text-sm transition-colors flex items-center gap-2"><Plus className="w-4 h-4" />New Post</button>
+        <button onClick={() => setShowModal(true)} className="px-4 py-2 bg-[#F97316] hover:bg-[#EA6D0E] text-white font-semibold rounded-xl text-sm transition-colors flex items-center gap-2"><Plus className="w-4 h-4" />New Post</button>
       </div>
       <div className="bg-[#111827] rounded-2xl border border-[#1F2937] overflow-hidden">
         <div className="overflow-x-auto">
@@ -1519,16 +1564,18 @@ function AdminBlogs({ blogs, fetchData }: { blogs: Blog[]; fetchData: () => void
 // ============================================
 function AdminPlaces({ places, fetchData }: { places: Place[]; fetchData: () => void }) {
   const [deleting, setDeleting] = useState<string | null>(null);
+  const [showModal, setShowModal] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [saveError, setSaveError] = useState('');
+  const emptyPlace = { name: '', slug: '', region: '', description: '', longDescription: '', image: '', altitude: '', bestTime: '', category: '', rating: '4.5', featured: false };
+  const [form, setForm] = useState(emptyPlace);
 
   const getAuthHeader = () => {
     try {
       const stored = sessionStorage.getItem('hiddenpak_admin');
-      if (stored) {
-        const user = JSON.parse(stored);
-        if (user.token) return { Authorization: `Bearer ${user.token}` };
-      }
+      if (stored) { const user = JSON.parse(stored); if (user.token) return { Authorization: `Bearer ${user.token}`, 'Content-Type': 'application/json' }; }
     } catch { /* ignore */ }
-    return {};
+    return { 'Content-Type': 'application/json' };
   };
 
   const handleDelete = async (id: string) => {
@@ -1541,11 +1588,54 @@ function AdminPlaces({ places, fetchData }: { places: Place[]; fetchData: () => 
     finally { setDeleting(null); }
   };
 
+  const handleCreate = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setSaving(true); setSaveError('');
+    try {
+      const payload = { ...form, slug: form.slug || form.name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, ''), rating: parseFloat(form.rating) || 4.5 };
+      const res = await fetch(`${API}/places`, { method: 'POST', headers: getAuthHeader(), body: JSON.stringify(payload) });
+      const data = await res.json();
+      if (data.success) { setShowModal(false); setForm(emptyPlace); await fetchData(); }
+      else setSaveError(data.message || data.error || 'Failed to create place');
+    } catch { setSaveError('Network error. Please try again.'); }
+    finally { setSaving(false); }
+  };
+
   return (
     <div>
+      {showModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm">
+          <div className="bg-[#111827] border border-[#1F2937] rounded-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto">
+            <div className="flex items-center justify-between p-6 border-b border-[#1F2937]">
+              <h3 className="text-lg font-bold text-white">Add New Place</h3>
+              <button onClick={() => setShowModal(false)} className="p-2 hover:bg-[#1F2937] rounded-lg text-[#6B7280] hover:text-white transition-colors"><X className="w-5 h-5" /></button>
+            </div>
+            <form onSubmit={handleCreate} className="p-6 space-y-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div><label className="block text-xs text-[#6B7280] mb-1">Name *</label><input required value={form.name} onChange={e => setForm(f => ({ ...f, name: e.target.value }))} className="w-full bg-[#1F2937] border border-[#374151] rounded-xl px-4 py-2.5 text-white text-sm focus:outline-none focus:border-[#F97316]" placeholder="Fairy Meadows" /></div>
+                <div><label className="block text-xs text-[#6B7280] mb-1">Region *</label><input required value={form.region} onChange={e => setForm(f => ({ ...f, region: e.target.value }))} className="w-full bg-[#1F2937] border border-[#374151] rounded-xl px-4 py-2.5 text-white text-sm focus:outline-none focus:border-[#F97316]" placeholder="Gilgit-Baltistan" /></div>
+                <div><label className="block text-xs text-[#6B7280] mb-1">Category *</label><input required value={form.category} onChange={e => setForm(f => ({ ...f, category: e.target.value }))} className="w-full bg-[#1F2937] border border-[#374151] rounded-xl px-4 py-2.5 text-white text-sm focus:outline-none focus:border-[#F97316]" placeholder="Alpine Meadow" /></div>
+                <div><label className="block text-xs text-[#6B7280] mb-1">Slug (auto if empty)</label><input value={form.slug} onChange={e => setForm(f => ({ ...f, slug: e.target.value }))} className="w-full bg-[#1F2937] border border-[#374151] rounded-xl px-4 py-2.5 text-white text-sm focus:outline-none focus:border-[#F97316]" placeholder="fairy-meadows" /></div>
+                <div><label className="block text-xs text-[#6B7280] mb-1">Altitude</label><input value={form.altitude} onChange={e => setForm(f => ({ ...f, altitude: e.target.value }))} className="w-full bg-[#1F2937] border border-[#374151] rounded-xl px-4 py-2.5 text-white text-sm focus:outline-none focus:border-[#F97316]" placeholder="3,300m" /></div>
+                <div><label className="block text-xs text-[#6B7280] mb-1">Best Time to Visit</label><input value={form.bestTime} onChange={e => setForm(f => ({ ...f, bestTime: e.target.value }))} className="w-full bg-[#1F2937] border border-[#374151] rounded-xl px-4 py-2.5 text-white text-sm focus:outline-none focus:border-[#F97316]" placeholder="June – September" /></div>
+                <div><label className="block text-xs text-[#6B7280] mb-1">Rating (0–5)</label><input type="number" min="0" max="5" step="0.1" value={form.rating} onChange={e => setForm(f => ({ ...f, rating: e.target.value }))} className="w-full bg-[#1F2937] border border-[#374151] rounded-xl px-4 py-2.5 text-white text-sm focus:outline-none focus:border-[#F97316]" /></div>
+                <div className="flex items-center gap-3 pt-5"><input type="checkbox" id="place-featured" checked={form.featured} onChange={e => setForm(f => ({ ...f, featured: e.target.checked }))} className="w-4 h-4 accent-[#F97316]" /><label htmlFor="place-featured" className="text-sm text-[#9CA3AF]">Mark as Featured</label></div>
+                <div className="sm:col-span-2"><label className="block text-xs text-[#6B7280] mb-1">Image URL *</label><input required value={form.image} onChange={e => setForm(f => ({ ...f, image: e.target.value }))} className="w-full bg-[#1F2937] border border-[#374151] rounded-xl px-4 py-2.5 text-white text-sm focus:outline-none focus:border-[#F97316]" placeholder="https://images.unsplash.com/..." /></div>
+                <div className="sm:col-span-2"><label className="block text-xs text-[#6B7280] mb-1">Short Description *</label><textarea required value={form.description} onChange={e => setForm(f => ({ ...f, description: e.target.value }))} rows={2} className="w-full bg-[#1F2937] border border-[#374151] rounded-xl px-4 py-2.5 text-white text-sm focus:outline-none focus:border-[#F97316] resize-none" placeholder="Brief description..." /></div>
+                <div className="sm:col-span-2"><label className="block text-xs text-[#6B7280] mb-1">Full Description</label><textarea value={form.longDescription} onChange={e => setForm(f => ({ ...f, longDescription: e.target.value }))} rows={4} className="w-full bg-[#1F2937] border border-[#374151] rounded-xl px-4 py-2.5 text-white text-sm focus:outline-none focus:border-[#F97316] resize-none" placeholder="Detailed description..." /></div>
+              </div>
+              {saveError && <p className="text-red-400 text-sm">{saveError}</p>}
+              <div className="flex gap-3 pt-2">
+                <button type="button" onClick={() => setShowModal(false)} className="flex-1 px-4 py-2.5 bg-[#1F2937] text-[#9CA3AF] rounded-xl text-sm font-medium hover:bg-[#374151] transition-colors">Cancel</button>
+                <button type="submit" disabled={saving} className="flex-1 px-4 py-2.5 bg-[#F97316] hover:bg-[#EA6D0E] text-white rounded-xl text-sm font-semibold transition-colors disabled:opacity-60 flex items-center justify-center gap-2">{saving ? <><Loader2 className="w-4 h-4 animate-spin" />Saving...</> : 'Add Place'}</button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
       <div className="flex items-center justify-between mb-6">
         <div><h2 className="text-xl font-bold text-white">Places</h2><p className="text-[#6B7280] text-sm">Manage travel destinations</p></div>
-        <button className="px-4 py-2 bg-[#F97316] hover:bg-[#EA6D0E] text-white font-semibold rounded-xl text-sm transition-colors flex items-center gap-2"><Plus className="w-4 h-4" />Add Place</button>
+        <button onClick={() => setShowModal(true)} className="px-4 py-2 bg-[#F97316] hover:bg-[#EA6D0E] text-white font-semibold rounded-xl text-sm transition-colors flex items-center gap-2"><Plus className="w-4 h-4" />Add Place</button>
       </div>
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
         {places.map(place => (
@@ -1581,16 +1671,18 @@ function AdminPlaces({ places, fetchData }: { places: Place[]; fetchData: () => 
 // ============================================
 function AdminGallery({ images, fetchData }: { images: GalleryImage[]; fetchData: () => void }) {
   const [deleting, setDeleting] = useState<string | null>(null);
+  const [showModal, setShowModal] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [saveError, setSaveError] = useState('');
+  const emptyImg = { src: '', alt: '', location: '', height: 'normal' };
+  const [form, setForm] = useState(emptyImg);
 
   const getAuthHeader = () => {
     try {
       const stored = sessionStorage.getItem('hiddenpak_admin');
-      if (stored) {
-        const user = JSON.parse(stored);
-        if (user.token) return { Authorization: `Bearer ${user.token}` };
-      }
+      if (stored) { const user = JSON.parse(stored); if (user.token) return { Authorization: `Bearer ${user.token}`, 'Content-Type': 'application/json' }; }
     } catch { /* ignore */ }
-    return {};
+    return { 'Content-Type': 'application/json' };
   };
 
   const handleDelete = async (id: string) => {
@@ -1603,11 +1695,49 @@ function AdminGallery({ images, fetchData }: { images: GalleryImage[]; fetchData
     finally { setDeleting(null); }
   };
 
+  const handleCreate = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setSaving(true); setSaveError('');
+    try {
+      const res = await fetch(`${API}/gallery`, { method: 'POST', headers: getAuthHeader(), body: JSON.stringify(form) });
+      const data = await res.json();
+      if (data.success) { setShowModal(false); setForm(emptyImg); await fetchData(); }
+      else setSaveError(data.message || data.error || 'Failed to add image');
+    } catch { setSaveError('Network error. Please try again.'); }
+    finally { setSaving(false); }
+  };
+
   return (
     <div>
+      {showModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm">
+          <div className="bg-[#111827] border border-[#1F2937] rounded-2xl w-full max-w-lg">
+            <div className="flex items-center justify-between p-6 border-b border-[#1F2937]">
+              <h3 className="text-lg font-bold text-white">Add Photo</h3>
+              <button onClick={() => setShowModal(false)} className="p-2 hover:bg-[#1F2937] rounded-lg text-[#6B7280] hover:text-white transition-colors"><X className="w-5 h-5" /></button>
+            </div>
+            <form onSubmit={handleCreate} className="p-6 space-y-4">
+              <div><label className="block text-xs text-[#6B7280] mb-1">Image URL *</label><input required value={form.src} onChange={e => setForm(f => ({ ...f, src: e.target.value }))} className="w-full bg-[#1F2937] border border-[#374151] rounded-xl px-4 py-2.5 text-white text-sm focus:outline-none focus:border-[#F97316]" placeholder="https://images.unsplash.com/..." /></div>
+              <div><label className="block text-xs text-[#6B7280] mb-1">Caption / Alt Text *</label><input required value={form.alt} onChange={e => setForm(f => ({ ...f, alt: e.target.value }))} className="w-full bg-[#1F2937] border border-[#374151] rounded-xl px-4 py-2.5 text-white text-sm focus:outline-none focus:border-[#F97316]" placeholder="Sunset over Nanga Parbat" /></div>
+              <div><label className="block text-xs text-[#6B7280] mb-1">Location *</label><input required value={form.location} onChange={e => setForm(f => ({ ...f, location: e.target.value }))} className="w-full bg-[#1F2937] border border-[#374151] rounded-xl px-4 py-2.5 text-white text-sm focus:outline-none focus:border-[#F97316]" placeholder="Gilgit-Baltistan" /></div>
+              <div><label className="block text-xs text-[#6B7280] mb-1">Height</label>
+                <select value={form.height} onChange={e => setForm(f => ({ ...f, height: e.target.value }))} className="w-full bg-[#1F2937] border border-[#374151] rounded-xl px-4 py-2.5 text-white text-sm focus:outline-none focus:border-[#F97316]">
+                  <option value="normal">Normal</option><option value="tall">Tall</option><option value="short">Short</option>
+                </select>
+              </div>
+              {form.src && <div className="rounded-xl overflow-hidden h-32 bg-[#1F2937]"><img src={form.src} alt="preview" className="w-full h-full object-cover" onError={e => (e.currentTarget.style.display = 'none')} /></div>}
+              {saveError && <p className="text-red-400 text-sm">{saveError}</p>}
+              <div className="flex gap-3 pt-2">
+                <button type="button" onClick={() => setShowModal(false)} className="flex-1 px-4 py-2.5 bg-[#1F2937] text-[#9CA3AF] rounded-xl text-sm font-medium hover:bg-[#374151] transition-colors">Cancel</button>
+                <button type="submit" disabled={saving} className="flex-1 px-4 py-2.5 bg-[#F97316] hover:bg-[#EA6D0E] text-white rounded-xl text-sm font-semibold transition-colors disabled:opacity-60 flex items-center justify-center gap-2">{saving ? <><Loader2 className="w-4 h-4 animate-spin" />Saving...</> : 'Add Photo'}</button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
       <div className="flex items-center justify-between mb-6">
         <div><h2 className="text-xl font-bold text-white">Gallery</h2><p className="text-[#6B7280] text-sm">{images.length} photos in your gallery</p></div>
-        <button className="px-4 py-2 bg-[#F97316] hover:bg-[#EA6D0E] text-white font-semibold rounded-xl text-sm transition-colors flex items-center gap-2"><Plus className="w-4 h-4" />Upload Photo</button>
+        <button onClick={() => setShowModal(true)} className="px-4 py-2 bg-[#F97316] hover:bg-[#EA6D0E] text-white font-semibold rounded-xl text-sm transition-colors flex items-center gap-2"><Plus className="w-4 h-4" />Add Photo</button>
       </div>
       <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
         {images.map(img => (
