@@ -79,10 +79,11 @@ export default function HiddenPakApp() {
       const [placesData, blogsData, galleryData, testimonialsData] = await Promise.all([
         placesRes.json(), blogsRes.json(), galleryRes.json(), testimonialsRes.json()
       ]);
-      if (placesData.success) setPlaces(placesData.data);
-      if (blogsData.success) setBlogs(blogsData.data);
-      if (galleryData.success) setGalleryImages(galleryData.data);
-      if (testimonialsData.success) setTestimonials(testimonialsData.data);
+      const norm = (arr: any[]) => arr.map((d: any) => ({ ...d, id: d._id || d.id }));
+      if (placesData.success) setPlaces(norm(placesData.data));
+      if (blogsData.success) setBlogs(norm(blogsData.data));
+      if (galleryData.success) setGalleryImages(norm(galleryData.data));
+      if (testimonialsData.success) setTestimonials(norm(testimonialsData.data));
       const failed = [placesData, blogsData, galleryData, testimonialsData].find(d => !d.success);
       if (failed) setFetchError(failed.message || 'Failed to load data from backend.');
     } catch {
@@ -1453,6 +1454,7 @@ function AdminDashboard({ places, blogs, galleryImages, analytics, navigate }: {
 function AdminBlogs({ blogs, fetchData }: { blogs: Blog[]; fetchData: () => void }) {
   const [deleting, setDeleting] = useState<string | null>(null);
   const [showModal, setShowModal] = useState(false);
+  const [editingId, setEditingId] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
   const [saveError, setSaveError] = useState('');
   const emptyBlog = { title: '', slug: '', excerpt: '', content: '', coverImage: '', author: '', category: '', tags: '', published: false };
@@ -1476,15 +1478,23 @@ function AdminBlogs({ blogs, fetchData }: { blogs: Blog[]; fetchData: () => void
     finally { setDeleting(null); }
   };
 
+  const openEdit = (blog: Blog) => {
+    setEditingId(blog.id);
+    setForm({ title: blog.title, slug: blog.slug, excerpt: blog.excerpt, content: blog.content, coverImage: blog.coverImage, author: blog.author, category: blog.category, tags: Array.isArray(blog.tags) ? blog.tags.join(', ') : '', published: blog.published });
+    setShowModal(true);
+  };
+
   const handleCreate = async (e: React.FormEvent) => {
     e.preventDefault();
     setSaving(true); setSaveError('');
     try {
       const payload = { ...form, slug: form.slug || form.title.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, ''), tags: form.tags ? form.tags.split(',').map((t: string) => t.trim()).filter(Boolean) : [], date: new Date().toISOString().split('T')[0] };
-      const res = await fetch(`${API}/blogs`, { method: 'POST', headers: getAuthHeader(), body: JSON.stringify(payload) });
+      const url = editingId ? `${API}/blogs/${editingId}` : `${API}/blogs`;
+      const method = editingId ? 'PUT' : 'POST';
+      const res = await fetch(url, { method, headers: getAuthHeader(), body: JSON.stringify(payload) });
       const data = await res.json();
-      if (data.success) { setShowModal(false); setForm(emptyBlog); await fetchData(); }
-      else setSaveError(data.message || data.error || 'Failed to create blog');
+      if (data.success) { setShowModal(false); setEditingId(null); setForm(emptyBlog); await fetchData(); }
+      else setSaveError(data.message || data.error || 'Failed to save blog');
     } catch { setSaveError('Network error. Please try again.'); }
     finally { setSaving(false); }
   };
@@ -1495,8 +1505,8 @@ function AdminBlogs({ blogs, fetchData }: { blogs: Blog[]; fetchData: () => void
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm">
           <div className="bg-[#111827] border border-[#1F2937] rounded-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto">
             <div className="flex items-center justify-between p-6 border-b border-[#1F2937]">
-              <h3 className="text-lg font-bold text-white">New Blog Post</h3>
-              <button onClick={() => setShowModal(false)} className="p-2 hover:bg-[#1F2937] rounded-lg text-[#6B7280] hover:text-white transition-colors"><X className="w-5 h-5" /></button>
+              <h3 className="text-lg font-bold text-white">{editingId ? 'Edit Blog Post' : 'New Blog Post'}</h3>
+              <button onClick={() => { setShowModal(false); setEditingId(null); setForm(emptyBlog); }} className="p-2 hover:bg-[#1F2937] rounded-lg text-[#6B7280] hover:text-white transition-colors"><X className="w-5 h-5" /></button>
             </div>
             <form onSubmit={handleCreate} className="p-6 space-y-4">
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -1512,8 +1522,8 @@ function AdminBlogs({ blogs, fetchData }: { blogs: Blog[]; fetchData: () => void
               </div>
               {saveError && <p className="text-red-400 text-sm">{saveError}</p>}
               <div className="flex gap-3 pt-2">
-                <button type="button" onClick={() => setShowModal(false)} className="flex-1 px-4 py-2.5 bg-[#1F2937] text-[#9CA3AF] rounded-xl text-sm font-medium hover:bg-[#374151] transition-colors">Cancel</button>
-                <button type="submit" disabled={saving} className="flex-1 px-4 py-2.5 bg-[#F97316] hover:bg-[#EA6D0E] text-white rounded-xl text-sm font-semibold transition-colors disabled:opacity-60 flex items-center justify-center gap-2">{saving ? <><Loader2 className="w-4 h-4 animate-spin" />Saving...</> : 'Create Post'}</button>
+                <button type="button" onClick={() => { setShowModal(false); setEditingId(null); setForm(emptyBlog); }} className="flex-1 px-4 py-2.5 bg-[#1F2937] text-[#9CA3AF] rounded-xl text-sm font-medium hover:bg-[#374151] transition-colors">Cancel</button>
+                <button type="submit" disabled={saving} className="flex-1 px-4 py-2.5 bg-[#F97316] hover:bg-[#EA6D0E] text-white rounded-xl text-sm font-semibold transition-colors disabled:opacity-60 flex items-center justify-center gap-2">{saving ? <><Loader2 className="w-4 h-4 animate-spin" />Saving...</> : editingId ? 'Update Post' : 'Create Post'}</button>
               </div>
             </form>
           </div>
@@ -1542,7 +1552,7 @@ function AdminBlogs({ blogs, fetchData }: { blogs: Blog[]; fetchData: () => void
                   <td className="p-4 hidden lg:table-cell"><span className={`px-2.5 py-1 rounded-lg text-xs font-medium ${blog.published ? 'bg-emerald-500/10 text-emerald-400' : 'bg-yellow-500/10 text-yellow-400'}`}>{blog.published ? 'Published' : 'Draft'}</span></td>
                   <td className="p-4">
                     <div className="flex items-center gap-2">
-                      <button className="p-1.5 bg-[#1F2937] hover:bg-blue-500/20 text-[#6B7280] hover:text-blue-400 rounded-lg transition-colors"><Pencil className="w-3.5 h-3.5" /></button>
+                      <button onClick={() => openEdit(blog)} className="p-1.5 bg-[#1F2937] hover:bg-blue-500/20 text-[#6B7280] hover:text-blue-400 rounded-lg transition-colors"><Pencil className="w-3.5 h-3.5" /></button>
                       <button onClick={() => handleDelete(blog.id)} disabled={deleting === blog.id} className="p-1.5 bg-[#1F2937] hover:bg-red-500/20 text-[#6B7280] hover:text-red-400 rounded-lg transition-colors disabled:opacity-50">
                         {deleting === blog.id ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Trash2 className="w-3.5 h-3.5" />}
                       </button>
@@ -1565,6 +1575,7 @@ function AdminBlogs({ blogs, fetchData }: { blogs: Blog[]; fetchData: () => void
 function AdminPlaces({ places, fetchData }: { places: Place[]; fetchData: () => void }) {
   const [deleting, setDeleting] = useState<string | null>(null);
   const [showModal, setShowModal] = useState(false);
+  const [editingId, setEditingId] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
   const [saveError, setSaveError] = useState('');
   const emptyPlace = { name: '', slug: '', region: '', description: '', longDescription: '', image: '', altitude: '', bestTime: '', category: '', rating: '4.5', featured: false };
@@ -1576,6 +1587,12 @@ function AdminPlaces({ places, fetchData }: { places: Place[]; fetchData: () => 
       if (stored) { const user = JSON.parse(stored); if (user.token) return { Authorization: `Bearer ${user.token}`, 'Content-Type': 'application/json' }; }
     } catch { /* ignore */ }
     return { 'Content-Type': 'application/json' };
+  };
+
+  const openEdit = (p: Place) => {
+    setEditingId(p.id);
+    setForm({ name: p.name, slug: p.slug, region: p.region, description: p.description, longDescription: p.longDescription, image: p.image, altitude: p.altitude, bestTime: p.bestTime, category: p.category, rating: String(p.rating), featured: p.featured });
+    setShowModal(true);
   };
 
   const handleDelete = async (id: string) => {
@@ -1593,10 +1610,12 @@ function AdminPlaces({ places, fetchData }: { places: Place[]; fetchData: () => 
     setSaving(true); setSaveError('');
     try {
       const payload = { ...form, slug: form.slug || form.name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, ''), rating: parseFloat(form.rating) || 4.5 };
-      const res = await fetch(`${API}/places`, { method: 'POST', headers: getAuthHeader(), body: JSON.stringify(payload) });
+      const url = editingId ? `${API}/places/${editingId}` : `${API}/places`;
+      const method = editingId ? 'PUT' : 'POST';
+      const res = await fetch(url, { method, headers: getAuthHeader(), body: JSON.stringify(payload) });
       const data = await res.json();
-      if (data.success) { setShowModal(false); setForm(emptyPlace); await fetchData(); }
-      else setSaveError(data.message || data.error || 'Failed to create place');
+      if (data.success) { setShowModal(false); setEditingId(null); setForm(emptyPlace); await fetchData(); }
+      else setSaveError(data.message || data.error || 'Failed to save place');
     } catch { setSaveError('Network error. Please try again.'); }
     finally { setSaving(false); }
   };
@@ -1607,8 +1626,8 @@ function AdminPlaces({ places, fetchData }: { places: Place[]; fetchData: () => 
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm">
           <div className="bg-[#111827] border border-[#1F2937] rounded-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto">
             <div className="flex items-center justify-between p-6 border-b border-[#1F2937]">
-              <h3 className="text-lg font-bold text-white">Add New Place</h3>
-              <button onClick={() => setShowModal(false)} className="p-2 hover:bg-[#1F2937] rounded-lg text-[#6B7280] hover:text-white transition-colors"><X className="w-5 h-5" /></button>
+              <h3 className="text-lg font-bold text-white">{editingId ? 'Edit Place' : 'Add New Place'}</h3>
+              <button onClick={() => { setShowModal(false); setEditingId(null); setForm(emptyPlace); }} className="p-2 hover:bg-[#1F2937] rounded-lg text-[#6B7280] hover:text-white transition-colors"><X className="w-5 h-5" /></button>
             </div>
             <form onSubmit={handleCreate} className="p-6 space-y-4">
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -1626,8 +1645,8 @@ function AdminPlaces({ places, fetchData }: { places: Place[]; fetchData: () => 
               </div>
               {saveError && <p className="text-red-400 text-sm">{saveError}</p>}
               <div className="flex gap-3 pt-2">
-                <button type="button" onClick={() => setShowModal(false)} className="flex-1 px-4 py-2.5 bg-[#1F2937] text-[#9CA3AF] rounded-xl text-sm font-medium hover:bg-[#374151] transition-colors">Cancel</button>
-                <button type="submit" disabled={saving} className="flex-1 px-4 py-2.5 bg-[#F97316] hover:bg-[#EA6D0E] text-white rounded-xl text-sm font-semibold transition-colors disabled:opacity-60 flex items-center justify-center gap-2">{saving ? <><Loader2 className="w-4 h-4 animate-spin" />Saving...</> : 'Add Place'}</button>
+                <button type="button" onClick={() => { setShowModal(false); setEditingId(null); setForm(emptyPlace); }} className="flex-1 px-4 py-2.5 bg-[#1F2937] text-[#9CA3AF] rounded-xl text-sm font-medium hover:bg-[#374151] transition-colors">Cancel</button>
+                <button type="submit" disabled={saving} className="flex-1 px-4 py-2.5 bg-[#F97316] hover:bg-[#EA6D0E] text-white rounded-xl text-sm font-semibold transition-colors disabled:opacity-60 flex items-center justify-center gap-2">{saving ? <><Loader2 className="w-4 h-4 animate-spin" />Saving...</> : editingId ? 'Update Place' : 'Add Place'}</button>
               </div>
             </form>
           </div>
@@ -1651,7 +1670,7 @@ function AdminPlaces({ places, fetchData }: { places: Place[]; fetchData: () => 
               <div className="flex items-center justify-between">
                 <span className="px-2 py-0.5 bg-[#14532D]/20 text-emerald-400 rounded-lg text-xs font-medium">{place.category}</span>
                 <div className="flex items-center gap-2">
-                  <button className="p-1.5 bg-[#1F2937] hover:bg-blue-500/20 text-[#6B7280] hover:text-blue-400 rounded-lg transition-colors"><Pencil className="w-3.5 h-3.5" /></button>
+                  <button onClick={() => openEdit(place)} className="p-1.5 bg-[#1F2937] hover:bg-blue-500/20 text-[#6B7280] hover:text-blue-400 rounded-lg transition-colors"><Pencil className="w-3.5 h-3.5" /></button>
                   <button onClick={() => handleDelete(place.id)} disabled={deleting === place.id} className="p-1.5 bg-[#1F2937] hover:bg-red-500/20 text-[#6B7280] hover:text-red-400 rounded-lg transition-colors disabled:opacity-50">
                     {deleting === place.id ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Trash2 className="w-3.5 h-3.5" />}
                   </button>
@@ -1672,6 +1691,7 @@ function AdminPlaces({ places, fetchData }: { places: Place[]; fetchData: () => 
 function AdminGallery({ images, fetchData }: { images: GalleryImage[]; fetchData: () => void }) {
   const [deleting, setDeleting] = useState<string | null>(null);
   const [showModal, setShowModal] = useState(false);
+  const [editingId, setEditingId] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
   const [saveError, setSaveError] = useState('');
   const emptyImg = { src: '', alt: '', location: '', height: 'normal' };
@@ -1683,6 +1703,12 @@ function AdminGallery({ images, fetchData }: { images: GalleryImage[]; fetchData
       if (stored) { const user = JSON.parse(stored); if (user.token) return { Authorization: `Bearer ${user.token}`, 'Content-Type': 'application/json' }; }
     } catch { /* ignore */ }
     return { 'Content-Type': 'application/json' };
+  };
+
+  const openEdit = (img: GalleryImage) => {
+    setEditingId(img.id);
+    setForm({ src: img.src, alt: img.alt, location: img.location, height: img.height });
+    setShowModal(true);
   };
 
   const handleDelete = async (id: string) => {
@@ -1699,10 +1725,12 @@ function AdminGallery({ images, fetchData }: { images: GalleryImage[]; fetchData
     e.preventDefault();
     setSaving(true); setSaveError('');
     try {
-      const res = await fetch(`${API}/gallery`, { method: 'POST', headers: getAuthHeader(), body: JSON.stringify(form) });
+      const url = editingId ? `${API}/gallery/${editingId}` : `${API}/gallery`;
+      const method = editingId ? 'PUT' : 'POST';
+      const res = await fetch(url, { method, headers: getAuthHeader(), body: JSON.stringify(form) });
       const data = await res.json();
-      if (data.success) { setShowModal(false); setForm(emptyImg); await fetchData(); }
-      else setSaveError(data.message || data.error || 'Failed to add image');
+      if (data.success) { setShowModal(false); setEditingId(null); setForm(emptyImg); await fetchData(); }
+      else setSaveError(data.message || data.error || 'Failed to save image');
     } catch { setSaveError('Network error. Please try again.'); }
     finally { setSaving(false); }
   };
@@ -1713,8 +1741,8 @@ function AdminGallery({ images, fetchData }: { images: GalleryImage[]; fetchData
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm">
           <div className="bg-[#111827] border border-[#1F2937] rounded-2xl w-full max-w-lg">
             <div className="flex items-center justify-between p-6 border-b border-[#1F2937]">
-              <h3 className="text-lg font-bold text-white">Add Photo</h3>
-              <button onClick={() => setShowModal(false)} className="p-2 hover:bg-[#1F2937] rounded-lg text-[#6B7280] hover:text-white transition-colors"><X className="w-5 h-5" /></button>
+              <h3 className="text-lg font-bold text-white">{editingId ? 'Edit Photo' : 'Add Photo'}</h3>
+              <button onClick={() => { setShowModal(false); setEditingId(null); setForm(emptyImg); }} className="p-2 hover:bg-[#1F2937] rounded-lg text-[#6B7280] hover:text-white transition-colors"><X className="w-5 h-5" /></button>
             </div>
             <form onSubmit={handleCreate} className="p-6 space-y-4">
               <div><label className="block text-xs text-[#6B7280] mb-1">Image URL *</label><input required value={form.src} onChange={e => setForm(f => ({ ...f, src: e.target.value }))} className="w-full bg-[#1F2937] border border-[#374151] rounded-xl px-4 py-2.5 text-white text-sm focus:outline-none focus:border-[#F97316]" placeholder="https://images.unsplash.com/..." /></div>
@@ -1728,8 +1756,8 @@ function AdminGallery({ images, fetchData }: { images: GalleryImage[]; fetchData
               {form.src && <div className="rounded-xl overflow-hidden h-32 bg-[#1F2937]"><img src={form.src} alt="preview" className="w-full h-full object-cover" onError={e => (e.currentTarget.style.display = 'none')} /></div>}
               {saveError && <p className="text-red-400 text-sm">{saveError}</p>}
               <div className="flex gap-3 pt-2">
-                <button type="button" onClick={() => setShowModal(false)} className="flex-1 px-4 py-2.5 bg-[#1F2937] text-[#9CA3AF] rounded-xl text-sm font-medium hover:bg-[#374151] transition-colors">Cancel</button>
-                <button type="submit" disabled={saving} className="flex-1 px-4 py-2.5 bg-[#F97316] hover:bg-[#EA6D0E] text-white rounded-xl text-sm font-semibold transition-colors disabled:opacity-60 flex items-center justify-center gap-2">{saving ? <><Loader2 className="w-4 h-4 animate-spin" />Saving...</> : 'Add Photo'}</button>
+                <button type="button" onClick={() => { setShowModal(false); setEditingId(null); setForm(emptyImg); }} className="flex-1 px-4 py-2.5 bg-[#1F2937] text-[#9CA3AF] rounded-xl text-sm font-medium hover:bg-[#374151] transition-colors">Cancel</button>
+                <button type="submit" disabled={saving} className="flex-1 px-4 py-2.5 bg-[#F97316] hover:bg-[#EA6D0E] text-white rounded-xl text-sm font-semibold transition-colors disabled:opacity-60 flex items-center justify-center gap-2">{saving ? <><Loader2 className="w-4 h-4 animate-spin" />Saving...</> : editingId ? 'Update Photo' : 'Add Photo'}</button>
               </div>
             </form>
           </div>
@@ -1743,7 +1771,8 @@ function AdminGallery({ images, fetchData }: { images: GalleryImage[]; fetchData
         {images.map(img => (
           <div key={img.id} className="relative rounded-2xl overflow-hidden group bg-[#111827] border border-[#1F2937] aspect-[4/3]">
             <img src={img.src} alt={img.alt} className="w-full h-full object-cover" />
-            <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+            <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2">
+              <button onClick={() => openEdit(img)} className="p-2 bg-blue-500/20 hover:bg-blue-500/40 text-blue-400 rounded-xl transition-colors"><Pencil className="w-5 h-5" /></button>
               <button onClick={() => handleDelete(img.id)} disabled={deleting === img.id} className="p-2 bg-red-500/20 hover:bg-red-500/40 text-red-400 rounded-xl transition-colors disabled:opacity-50">
                 {deleting === img.id ? <Loader2 className="w-5 h-5 animate-spin" /> : <Trash2 className="w-5 h-5" />}
               </button>
