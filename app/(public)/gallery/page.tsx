@@ -1,10 +1,20 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import Image from "next/image";
 import { ZoomIn, MapPin, X, ChevronLeft, ChevronRight, Camera } from "lucide-react";
-import { galleryImages } from "@/lib/data";
+import { galleryService } from "@/lib/services/gallery.service";
+
+interface GalleryImage {
+  id?: string;
+  _id?: string;
+  imageUrl: string;
+  caption?: string;
+  location?: string;
+  height?: "tall" | "medium" | "short";
+  alt?: string;
+}
 
 const filterTabs = [
   "All",
@@ -15,10 +25,13 @@ const filterTabs = [
   "Wildlife",
 ];
 
-// Map gallery images to filter categories by keyword matching
-function matchesFilter(location: string, alt: string, filter: string): boolean {
+function matchesFilter(
+  location: string,
+  caption: string,
+  filter: string
+): boolean {
   if (filter === "All") return true;
-  const combined = (location + " " + alt).toLowerCase();
+  const combined = (location + " " + caption).toLowerCase();
   const map: Record<string, string[]> = {
     Mountains: ["mountain", "peak", "karakoram", "nanga", "k2", "skardu", "fairy"],
     Valleys: ["valley", "swat", "hunza", "naran", "kaghan", "gilgit"],
@@ -29,12 +42,35 @@ function matchesFilter(location: string, alt: string, filter: string): boolean {
   return (map[filter] || []).some((kw) => combined.includes(kw));
 }
 
+function SkeletonItem({ tall }: { tall?: boolean }) {
+  return (
+    <div
+      className={`break-inside-avoid rounded-2xl overflow-hidden animate-pulse bg-[#1F2937] border border-[#1F2937] ${
+        tall ? "h-80" : "h-48"
+      }`}
+    />
+  );
+}
+
 export default function GalleryPage() {
+  const [allImages, setAllImages] = useState<GalleryImage[]>([]);
+  const [loading, setLoading] = useState(true);
   const [activeFilter, setActiveFilter] = useState("All");
   const [lightbox, setLightbox] = useState<number | null>(null);
 
-  const filtered = galleryImages.filter((img) =>
-    matchesFilter(img.location, img.alt, activeFilter)
+  useEffect(() => {
+    galleryService
+      .getAll(1, 50)
+      .then((res) => {
+        const items: GalleryImage[] = res?.data ?? res ?? [];
+        setAllImages(items);
+      })
+      .catch(() => setAllImages([]))
+      .finally(() => setLoading(false));
+  }, []);
+
+  const filtered = allImages.filter((img) =>
+    matchesFilter(img.location ?? "", img.caption ?? "", activeFilter)
   );
 
   const openLightbox = (idx: number) => setLightbox(idx);
@@ -50,7 +86,7 @@ export default function GalleryPage() {
 
   return (
     <div className="min-h-screen bg-[#0B0F19]">
-      {/* ── Hero Banner ─────────────────────────────────────────── */}
+      {/* Hero Banner */}
       <div className="relative pt-32 pb-20 overflow-hidden">
         <div
           className="absolute inset-0 bg-cover bg-center"
@@ -85,7 +121,7 @@ export default function GalleryPage() {
       </div>
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-20 -mt-4">
-        {/* ── Filter Tabs ─────────────────────────────────────── */}
+        {/* Filter Tabs */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
@@ -105,77 +141,89 @@ export default function GalleryPage() {
               {tab}
             </button>
           ))}
-          <span className="ml-auto text-sm text-[#6B7280]">
-            <span className="text-[#F5F5DC] font-semibold">{filtered.length}</span>{" "}
-            photos
-          </span>
+          {!loading && (
+            <span className="ml-auto text-sm text-[#6B7280]">
+              <span className="text-[#F5F5DC] font-semibold">{filtered.length}</span>{" "}
+              photos
+            </span>
+          )}
         </motion.div>
 
-        {/* ── Masonry Grid ─────────────────────────────────────── */}
-        <AnimatePresence mode="wait">
-          <motion.div
-            key={activeFilter}
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            transition={{ duration: 0.3 }}
-            className="columns-2 md:columns-3 lg:columns-4 gap-4 space-y-4"
-          >
-            {filtered.map((img, idx) => (
-              <motion.div
-                key={img.id}
-                initial={{ opacity: 0, scale: 0.95 }}
-                animate={{ opacity: 1, scale: 1 }}
-                transition={{ duration: 0.35, delay: idx * 0.04 }}
-                className="break-inside-avoid group relative overflow-hidden rounded-2xl cursor-pointer border border-[#1F2937] hover:border-[#F97316]/40 transition-all duration-300"
-                onClick={() => openLightbox(idx)}
-              >
-                <div
-                  className={`relative w-full overflow-hidden rounded-2xl ${
-                    img.height === "tall"
-                      ? "h-80"
-                      : img.height === "medium"
-                      ? "h-56"
-                      : "h-44"
-                  }`}
+        {/* Masonry Grid */}
+        {loading ? (
+          <div className="columns-2 md:columns-3 lg:columns-4 gap-4 space-y-4">
+            {Array.from({ length: 12 }).map((_, i) => (
+              <SkeletonItem key={i} tall={i % 3 === 0} />
+            ))}
+          </div>
+        ) : (
+          <AnimatePresence mode="wait">
+            <motion.div
+              key={activeFilter}
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.3 }}
+              className="columns-2 md:columns-3 lg:columns-4 gap-4 space-y-4"
+            >
+              {filtered.map((img, idx) => (
+                <motion.div
+                  key={img._id ?? img.id ?? idx}
+                  initial={{ opacity: 0, scale: 0.95 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  transition={{ duration: 0.35, delay: idx * 0.04 }}
+                  className="break-inside-avoid group relative overflow-hidden rounded-2xl cursor-pointer border border-[#1F2937] hover:border-[#F97316]/40 transition-all duration-300"
+                  onClick={() => openLightbox(idx)}
                 >
-                  <Image
-                    src={img.src}
-                    alt={img.alt}
-                    fill
-                    className="object-cover transition-transform duration-500 group-hover:scale-110"
-                    sizes="(max-width: 768px) 50vw, (max-width: 1024px) 33vw, 25vw"
-                  />
-                  {/* Dark overlay on hover */}
-                  <div className="absolute inset-0 bg-gradient-to-t from-[#0B0F19]/80 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-all duration-300" />
+                  <div
+                    className={`relative w-full overflow-hidden rounded-2xl ${
+                      img.height === "tall"
+                        ? "h-80"
+                        : img.height === "medium"
+                        ? "h-56"
+                        : "h-44"
+                    }`}
+                  >
+                    <Image
+                      src={img.imageUrl}
+                      alt={img.caption ?? img.location ?? "Pakistan landscape"}
+                      fill
+                      className="object-cover transition-transform duration-500 group-hover:scale-110"
+                      sizes="(max-width: 768px) 50vw, (max-width: 1024px) 33vw, 25vw"
+                    />
+                    {/* Dark overlay */}
+                    <div className="absolute inset-0 bg-gradient-to-t from-[#0B0F19]/80 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-all duration-300" />
 
-                  {/* Hover content */}
-                  <div className="absolute inset-0 flex items-end justify-between p-4 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-                    <div className="flex items-center gap-1.5 max-w-[calc(100%-2.5rem)]">
-                      <MapPin className="w-3 h-3 text-[#F97316] flex-shrink-0" />
-                      <span className="text-white text-xs font-medium truncate">
-                        {img.location}
-                      </span>
-                    </div>
-                    <div className="w-9 h-9 bg-[#F97316] rounded-full flex items-center justify-center flex-shrink-0">
-                      <ZoomIn className="w-4 h-4 text-white" />
+                    {/* Hover content */}
+                    <div className="absolute inset-0 flex items-end justify-between p-4 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                      <div className="flex items-center gap-1.5 max-w-[calc(100%-2.5rem)]">
+                        <MapPin className="w-3 h-3 text-[#F97316] flex-shrink-0" />
+                        <span className="text-white text-xs font-medium truncate">
+                          {img.location ?? img.caption ?? "Pakistan"}
+                        </span>
+                      </div>
+                      <div className="w-9 h-9 bg-[#F97316] rounded-full flex items-center justify-center flex-shrink-0">
+                        <ZoomIn className="w-4 h-4 text-white" />
+                      </div>
                     </div>
                   </div>
-                </div>
-              </motion.div>
-            ))}
-          </motion.div>
-        </AnimatePresence>
+                </motion.div>
+              ))}
+            </motion.div>
+          </AnimatePresence>
+        )}
 
-        {filtered.length === 0 && (
+        {!loading && filtered.length === 0 && (
           <div className="text-center py-20">
             <Camera className="w-16 h-16 text-[#1F2937] mx-auto mb-4" />
-            <p className="text-[#6B7280] text-lg">No photos in this category yet.</p>
+            <p className="text-[#6B7280] text-lg">
+              No photos in this category yet.
+            </p>
           </div>
         )}
       </div>
 
-      {/* ── Lightbox ─────────────────────────────────────────── */}
+      {/* Lightbox */}
       <AnimatePresence>
         {lightbox !== null && filtered[lightbox] && (
           <motion.div
@@ -235,19 +283,21 @@ export default function GalleryPage() {
               onClick={(e) => e.stopPropagation()}
             >
               <Image
-                src={filtered[lightbox].src.replace("w=600", "w=1400")}
-                alt={filtered[lightbox].alt}
+                src={filtered[lightbox].imageUrl}
+                alt={filtered[lightbox].caption ?? filtered[lightbox].location ?? "Pakistan landscape"}
                 fill
                 className="object-contain"
                 sizes="100vw"
               />
               {/* Caption */}
-              <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex items-center gap-2 bg-black/70 backdrop-blur-sm border border-white/10 px-5 py-2.5 rounded-full whitespace-nowrap">
-                <MapPin className="w-3.5 h-3.5 text-[#F97316] flex-shrink-0" />
-                <span className="text-white text-sm font-medium">
-                  {filtered[lightbox].location}
-                </span>
-              </div>
+              {(filtered[lightbox].location || filtered[lightbox].caption) && (
+                <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex items-center gap-2 bg-black/70 backdrop-blur-sm border border-white/10 px-5 py-2.5 rounded-full whitespace-nowrap">
+                  <MapPin className="w-3.5 h-3.5 text-[#F97316] flex-shrink-0" />
+                  <span className="text-white text-sm font-medium">
+                    {filtered[lightbox].location ?? filtered[lightbox].caption}
+                  </span>
+                </div>
+              )}
             </motion.div>
           </motion.div>
         )}

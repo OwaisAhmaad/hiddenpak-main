@@ -1,14 +1,47 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
 import Image from "next/image";
 import Link from "next/link";
 import { ArrowRight, ZoomIn, MapPin } from "lucide-react";
-import { galleryImages } from "@/lib/data";
+import { galleryService } from "@/lib/services/gallery.service";
 
-const previewImages = galleryImages.slice(0, 8);
+interface GalleryImage {
+  id?: string;
+  _id?: string;
+  imageUrl: string;
+  caption?: string;
+  location?: string;
+  height?: "tall" | "medium" | "short";
+  alt?: string;
+}
+
+function SkeletonItem({ tall }: { tall?: boolean }) {
+  return (
+    <div
+      className={`break-inside-avoid rounded-2xl overflow-hidden animate-pulse bg-[#1F2937] border border-[#1F2937] ${
+        tall ? "h-80" : "h-48"
+      }`}
+    />
+  );
+}
 
 export default function GalleryPreview() {
+  const [images, setImages] = useState<GalleryImage[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    galleryService
+      .getAll(1, 8)
+      .then((res) => {
+        const items: GalleryImage[] = res?.data ?? res ?? [];
+        setImages(items.slice(0, 8));
+      })
+      .catch(() => setImages([]))
+      .finally(() => setLoading(false));
+  }, []);
+
   return (
     <section className="py-24 bg-[#0B0F19]">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -43,48 +76,54 @@ export default function GalleryPreview() {
 
         {/* Masonry Grid */}
         <div className="columns-2 md:columns-3 lg:columns-4 gap-4 space-y-4">
-          {previewImages.map((img, idx) => (
-            <motion.div
-              key={img.id}
-              initial={{ opacity: 0, scale: 0.95 }}
-              whileInView={{ opacity: 1, scale: 1 }}
-              viewport={{ once: true }}
-              transition={{ duration: 0.5, delay: idx * 0.07 }}
-              className="break-inside-avoid group relative overflow-hidden rounded-2xl cursor-pointer border border-[#1F2937]"
-            >
-              <div
-                className={`relative w-full overflow-hidden rounded-2xl ${
-                  img.height === "tall"
-                    ? "h-80"
-                    : img.height === "medium"
-                    ? "h-56"
-                    : "h-44"
-                }`}
-              >
-                <Image
-                  src={img.src}
-                  alt={img.alt}
-                  fill
-                  className="object-cover transition-transform duration-500 group-hover:scale-110"
-                  sizes="(max-width: 768px) 50vw, (max-width: 1024px) 33vw, 25vw"
-                />
-                {/* Hover Overlay */}
-                <div className="absolute inset-0 bg-[#0B0F19]/0 group-hover:bg-[#0B0F19]/55 transition-all duration-300 flex items-center justify-center">
-                  <div className="opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex flex-col items-center gap-2">
-                    <div className="w-10 h-10 bg-[#111827]/80 backdrop-blur-sm rounded-full flex items-center justify-center border border-[#1F2937]">
-                      <ZoomIn className="w-5 h-5 text-white" />
-                    </div>
-                    <div className="flex items-center gap-1.5 bg-[#0B0F19]/80 backdrop-blur-sm px-3 py-1.5 rounded-xl border border-[#1F2937]">
-                      <MapPin className="w-3 h-3 text-[#F97316]" />
-                      <span className="text-white text-xs font-medium">
-                        {img.location}
-                      </span>
+          {loading
+            ? Array.from({ length: 8 }).map((_, i) => (
+                <SkeletonItem key={i} tall={i % 3 === 0} />
+              ))
+            : images.map((img, idx) => (
+                <motion.div
+                  key={img._id ?? img.id ?? idx}
+                  initial={{ opacity: 0, scale: 0.95 }}
+                  whileInView={{ opacity: 1, scale: 1 }}
+                  viewport={{ once: true }}
+                  transition={{ duration: 0.5, delay: idx * 0.07 }}
+                  className="break-inside-avoid group relative overflow-hidden rounded-2xl cursor-pointer border border-[#1F2937]"
+                >
+                  <div
+                    className={`relative w-full overflow-hidden rounded-2xl ${
+                      img.height === "tall"
+                        ? "h-80"
+                        : img.height === "medium"
+                        ? "h-56"
+                        : "h-44"
+                    }`}
+                  >
+                    <Image
+                      src={img.imageUrl}
+                      alt={img.caption ?? img.location ?? "Pakistan landscape"}
+                      fill
+                      className="object-cover transition-transform duration-500 group-hover:scale-110"
+                      sizes="(max-width: 768px) 50vw, (max-width: 1024px) 33vw, 25vw"
+                    />
+                    {/* Hover Overlay */}
+                    <div className="absolute inset-0 bg-[#0B0F19]/0 group-hover:bg-[#0B0F19]/55 transition-all duration-300 flex items-center justify-center">
+                      <div className="opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex flex-col items-center gap-2">
+                        <div className="w-10 h-10 bg-[#111827]/80 backdrop-blur-sm rounded-full flex items-center justify-center border border-[#1F2937]">
+                          <ZoomIn className="w-5 h-5 text-white" />
+                        </div>
+                        {img.location && (
+                          <div className="flex items-center gap-1.5 bg-[#0B0F19]/80 backdrop-blur-sm px-3 py-1.5 rounded-xl border border-[#1F2937]">
+                            <MapPin className="w-3 h-3 text-[#F97316]" />
+                            <span className="text-white text-xs font-medium">
+                              {img.location}
+                            </span>
+                          </div>
+                        )}
+                      </div>
                     </div>
                   </div>
-                </div>
-              </div>
-            </motion.div>
-          ))}
+                </motion.div>
+              ))}
         </div>
 
         {/* Bottom CTA */}

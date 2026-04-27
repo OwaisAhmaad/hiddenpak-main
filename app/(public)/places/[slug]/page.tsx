@@ -1,5 +1,7 @@
-import { notFound } from "next/navigation";
-import type { Metadata } from "next";
+"use client";
+
+import { useEffect, useState } from "react";
+import { useParams } from "next/navigation";
 import Image from "next/image";
 import Link from "next/link";
 import {
@@ -13,27 +15,26 @@ import {
   Calendar,
   Navigation,
   ExternalLink,
+  Compass,
 } from "lucide-react";
-import { places } from "@/lib/data";
+import { placesService } from "@/lib/services/places.service";
 
-type Props = { params: { slug: string } };
+const FALLBACK_IMAGE =
+  "https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=800&q=80";
 
-export function generateStaticParams() {
-  return places.map((p) => ({ slug: p.slug }));
-}
-
-export async function generateMetadata({ params }: Props): Promise<Metadata> {
-  const place = places.find((p) => p.slug === params.slug);
-  if (!place) return { title: "Place Not Found" };
-  return {
-    title: `${place.name} — HiddenPak`,
-    description: place.description,
-    openGraph: {
-      title: place.name,
-      description: place.description,
-      images: [{ url: place.image, width: 800, height: 600 }],
-    },
-  };
+interface Place {
+  _id: string;
+  name: string;
+  slug: string;
+  region: string;
+  category: string;
+  rating: number;
+  description: string;
+  longDescription?: string;
+  image?: string;
+  gallery?: string[];
+  altitude?: string;
+  bestTime?: string;
 }
 
 const hardcodedReviews = [
@@ -69,7 +70,13 @@ const hardcodedReviews = [
   },
 ];
 
-function StarRating({ rating, size = "sm" }: { rating: number; size?: "sm" | "md" }) {
+function StarRating({
+  rating,
+  size = "sm",
+}: {
+  rating: number;
+  size?: "sm" | "md";
+}) {
   const cls = size === "md" ? "w-4 h-4" : "w-3 h-3";
   return (
     <div className="flex items-center gap-0.5">
@@ -87,13 +94,71 @@ function StarRating({ rating, size = "sm" }: { rating: number; size?: "sm" | "md
   );
 }
 
-export default function PlaceDetailPage({ params }: Props) {
-  const place = places.find((p) => p.slug === params.slug);
-  if (!place) notFound();
+function SkeletonDetail() {
+  return (
+    <div className="min-h-screen bg-[#0B0F19] animate-pulse">
+      <div className="h-[75vh] bg-[#111827]" />
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-14 grid grid-cols-1 lg:grid-cols-3 gap-10">
+        <div className="lg:col-span-2 space-y-5">
+          <div className="h-6 bg-[#1F2937] rounded w-1/3" />
+          <div className="h-3 bg-[#1F2937] rounded w-full" />
+          <div className="h-3 bg-[#1F2937] rounded w-full" />
+          <div className="h-3 bg-[#1F2937] rounded w-3/4" />
+        </div>
+        <div className="bg-[#111827] border border-[#1F2937] rounded-2xl h-64" />
+      </div>
+    </div>
+  );
+}
 
-  const related = places
-    .filter((p) => p.id !== place.id && p.region === place.region)
-    .slice(0, 3);
+export default function PlaceDetailPage() {
+  const params = useParams();
+  const slug = params?.slug as string;
+
+  const [place, setPlace] = useState<Place | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [notFound, setNotFound] = useState(false);
+
+  useEffect(() => {
+    if (!slug) return;
+    placesService
+      .getBySlug(slug)
+      .then((res) => {
+        const item: Place = res?.data ?? res;
+        if (!item || !item.name) {
+          setNotFound(true);
+        } else {
+          setPlace(item);
+        }
+      })
+      .catch(() => setNotFound(true))
+      .finally(() => setLoading(false));
+  }, [slug]);
+
+  if (loading) return <SkeletonDetail />;
+
+  if (notFound || !place) {
+    return (
+      <div className="min-h-screen bg-[#0B0F19] flex items-center justify-center">
+        <div className="text-center">
+          <Compass className="w-16 h-16 text-[#374151] mx-auto mb-4" />
+          <h1 className="text-2xl font-bold text-white font-heading mb-2">
+            Place Not Found
+          </h1>
+          <p className="text-[#6B7280] mb-6">
+            This destination doesn&apos;t exist or may have been removed.
+          </p>
+          <Link
+            href="/places"
+            className="inline-flex items-center gap-2 bg-[#F97316] hover:bg-[#EA6D0E] text-white font-semibold px-6 py-3 rounded-xl transition-colors"
+          >
+            <ArrowLeft className="w-4 h-4" />
+            Back to Places
+          </Link>
+        </div>
+      </div>
+    );
+  }
 
   const mapsSearchUrl = `https://www.google.com/maps/search/${encodeURIComponent(
     place.name + " Pakistan"
@@ -126,10 +191,10 @@ export default function PlaceDetailPage({ params }: Props) {
       />
 
       <div className="min-h-screen bg-[#0B0F19]">
-        {/* ── Full-Screen Hero ─────────────────────────────────── */}
+        {/* Full-Screen Hero */}
         <div className="relative h-[75vh] min-h-[520px]">
           <Image
-            src={place.image}
+            src={place.image || FALLBACK_IMAGE}
             alt={place.name}
             fill
             className="object-cover"
@@ -178,10 +243,10 @@ export default function PlaceDetailPage({ params }: Props) {
           </div>
         </div>
 
-        {/* ── Main Content ─────────────────────────────────────── */}
+        {/* Main Content */}
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-14">
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-10">
-            {/* ── Left Column (2/3) ─────────────────────────── */}
+            {/* Left Column (2/3) */}
             <div className="lg:col-span-2 space-y-12">
               {/* About */}
               <section>
@@ -190,36 +255,38 @@ export default function PlaceDetailPage({ params }: Props) {
                   About {place.name}
                 </h2>
                 <p className="text-[#F5F5DC]/80 leading-relaxed text-lg">
-                  {place.longDescription}
+                  {place.longDescription ?? place.description}
                 </p>
               </section>
 
               {/* Photo Gallery */}
-              <section>
-                <h2 className="text-2xl font-bold text-white font-heading mb-5 flex items-center gap-3">
-                  <span className="w-1 h-7 bg-[#F97316] rounded-full inline-block" />
-                  Photo Gallery
-                </h2>
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-                  {place.gallery.map((img, idx) => (
-                    <div
-                      key={idx}
-                      className={`relative overflow-hidden rounded-xl group cursor-pointer ${
-                        idx === 0 ? "col-span-2 row-span-2 h-64" : "h-28"
-                      }`}
-                    >
-                      <Image
-                        src={img}
-                        alt={`${place.name} ${idx + 1}`}
-                        fill
-                        className="object-cover transition-transform duration-500 group-hover:scale-110"
-                        sizes="(max-width: 768px) 50vw, 25vw"
-                      />
-                      <div className="absolute inset-0 bg-black/0 group-hover:bg-black/30 transition-colors duration-300 rounded-xl" />
-                    </div>
-                  ))}
-                </div>
-              </section>
+              {place.gallery && place.gallery.length > 0 && (
+                <section>
+                  <h2 className="text-2xl font-bold text-white font-heading mb-5 flex items-center gap-3">
+                    <span className="w-1 h-7 bg-[#F97316] rounded-full inline-block" />
+                    Photo Gallery
+                  </h2>
+                  <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                    {place.gallery.map((img, idx) => (
+                      <div
+                        key={idx}
+                        className={`relative overflow-hidden rounded-xl group cursor-pointer ${
+                          idx === 0 ? "col-span-2 row-span-2 h-64" : "h-28"
+                        }`}
+                      >
+                        <Image
+                          src={img}
+                          alt={`${place.name} ${idx + 1}`}
+                          fill
+                          className="object-cover transition-transform duration-500 group-hover:scale-110"
+                          sizes="(max-width: 768px) 50vw, 25vw"
+                        />
+                        <div className="absolute inset-0 bg-black/0 group-hover:bg-black/30 transition-colors duration-300 rounded-xl" />
+                      </div>
+                    ))}
+                  </div>
+                </section>
+              )}
 
               {/* Map */}
               <section>
@@ -230,7 +297,13 @@ export default function PlaceDetailPage({ params }: Props) {
                 <div className="bg-[#111827] border border-[#1F2937] rounded-2xl overflow-hidden">
                   <div className="h-72 w-full">
                     <iframe
-                      src={`https://www.openstreetmap.org/export/embed.html?bbox=60%2C23%2C77%2C37&layer=mapnik&marker=${place.region === "Gilgit-Baltistan" ? "35.8884,74.5419" : place.region === "Khyber Pakhtunkhwa" ? "34.9526,72.3311" : "31.5204,74.3587"}`}
+                      src={`https://www.openstreetmap.org/export/embed.html?bbox=60%2C23%2C77%2C37&layer=mapnik&marker=${
+                        place.region === "Gilgit-Baltistan"
+                          ? "35.8884,74.5419"
+                          : place.region === "Khyber Pakhtunkhwa"
+                          ? "34.9526,72.3311"
+                          : "31.5204,74.3587"
+                      }`}
                       className="w-full h-full grayscale opacity-80"
                       style={{ border: 0 }}
                       loading="lazy"
@@ -303,7 +376,7 @@ export default function PlaceDetailPage({ params }: Props) {
               </section>
             </div>
 
-            {/* ── Right Sidebar (1/3) ──────────────────────── */}
+            {/* Right Sidebar (1/3) */}
             <div className="space-y-6">
               {/* Quick Info */}
               <div className="bg-[#111827] border border-[#1F2937] rounded-2xl p-6 sticky top-24">
@@ -341,7 +414,9 @@ export default function PlaceDetailPage({ params }: Props) {
                         <Mountain className="w-5 h-5 text-blue-400" />
                       </div>
                       <div>
-                        <p className="text-xs text-[#6B7280] mb-0.5">Altitude</p>
+                        <p className="text-xs text-[#6B7280] mb-0.5">
+                          Altitude
+                        </p>
                         <p className="font-semibold text-[#F5F5DC] text-sm">
                           {place.altitude}
                         </p>
@@ -393,11 +468,13 @@ export default function PlaceDetailPage({ params }: Props) {
                   </h3>
                 </div>
                 <p className="text-sm text-[#6B7280] mb-4 leading-relaxed">
-                  Check current conditions before you travel — weather can change
-                  rapidly in mountain regions.
+                  Check current conditions before you travel — weather can
+                  change rapidly in mountain regions.
                 </p>
                 <a
-                  href={`https://www.weather.com/weather/today/l/${encodeURIComponent(place.name + " Pakistan")}`}
+                  href={`https://www.weather.com/weather/today/l/${encodeURIComponent(
+                    place.name + " Pakistan"
+                  )}`}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="block text-center bg-sky-500/10 border border-sky-500/30 text-sky-400 hover:bg-sky-500/20 font-semibold py-2.5 rounded-xl transition-colors text-sm"
@@ -424,42 +501,29 @@ export default function PlaceDetailPage({ params }: Props) {
                 </Link>
               </div>
 
-              {/* Related Places */}
-              {related.length > 0 && (
-                <div>
-                  <h3 className="text-base font-bold text-white font-heading mb-4">
-                    More in {place.region}
-                  </h3>
-                  <div className="space-y-3">
-                    {related.map((rel) => (
-                      <Link
-                        key={rel.id}
-                        href={`/places/${rel.slug}`}
-                        className="group flex items-center gap-3 p-3 bg-[#111827] border border-[#1F2937] rounded-xl hover:border-[#F97316]/40 transition-all"
-                      >
-                        <div className="relative w-14 h-14 rounded-lg overflow-hidden flex-shrink-0">
-                          <Image
-                            src={rel.image}
-                            alt={rel.name}
-                            fill
-                            className="object-cover transition-transform duration-300 group-hover:scale-110"
-                            sizes="56px"
-                          />
-                        </div>
-                        <div className="flex-1 min-w-0">
-                          <p className="font-semibold text-[#F5F5DC] text-sm group-hover:text-[#F97316] transition-colors truncate">
-                            {rel.name}
-                          </p>
-                          <p className="text-xs text-[#6B7280]">
-                            {rel.category}
-                          </p>
-                        </div>
-                        <ArrowRight className="w-4 h-4 text-[#374151] group-hover:text-[#F97316] transition-colors flex-shrink-0" />
-                      </Link>
-                    ))}
+              {/* Explore more */}
+              <div>
+                <h3 className="text-base font-bold text-white font-heading mb-4">
+                  Explore More
+                </h3>
+                <Link
+                  href="/places"
+                  className="group flex items-center gap-3 p-3 bg-[#111827] border border-[#1F2937] rounded-xl hover:border-[#F97316]/40 transition-all"
+                >
+                  <div className="w-10 h-10 bg-[#F97316]/10 rounded-lg flex items-center justify-center flex-shrink-0">
+                    <Compass className="w-5 h-5 text-[#F97316]" />
                   </div>
-                </div>
-              )}
+                  <div className="flex-1">
+                    <p className="font-semibold text-[#F5F5DC] text-sm group-hover:text-[#F97316] transition-colors">
+                      All Destinations
+                    </p>
+                    <p className="text-xs text-[#6B7280]">
+                      Browse all places in Pakistan
+                    </p>
+                  </div>
+                  <ArrowRight className="w-4 h-4 text-[#374151] group-hover:text-[#F97316] transition-colors flex-shrink-0" />
+                </Link>
+              </div>
             </div>
           </div>
         </div>

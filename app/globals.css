@@ -55,14 +55,14 @@ h6 {
 
 @layer utilities {
   .text-gradient-green {
-    background: linear-gradient(135deg, #4ade80, #14532d);
+    background: linear-gradient(135deg, #14532D, #16a34a);
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     background-clip: text;
   }
 
   .text-gradient-orange {
-    background: linear-gradient(135deg, #f97316, #ea6d0e);
+    background: linear-gradient(135deg, #F97316, #FBBF24);
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     background-clip: text;
@@ -91,6 +91,14 @@ h6 {
     -webkit-line-clamp: 3;
     -webkit-box-orient: vertical;
     overflow: hidden;
+  }
+
+  .scrollbar-hide::-webkit-scrollbar {
+    display: none;
+  }
+  .scrollbar-hide {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
   }
 }
 

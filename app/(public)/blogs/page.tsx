@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import Image from "next/image";
 import Link from "next/link";
@@ -13,9 +13,25 @@ import {
   User,
   Compass,
 } from "lucide-react";
-import { blogs } from "@/lib/data";
+import { blogsService } from "@/lib/services/blogs.service";
 
-const categories = [
+const FALLBACK_IMAGE =
+  "https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=800&q=80";
+
+interface Blog {
+  id?: string;
+  _id?: string;
+  title: string;
+  slug: string;
+  excerpt?: string;
+  coverImage?: string;
+  author?: string;
+  category?: string;
+  readTime?: string;
+  date?: string;
+}
+
+const filterCategories = [
   "All",
   "Trekking",
   "Culture",
@@ -44,7 +60,7 @@ const containerVariants = {
 
 const cardVariants = {
   hidden: { opacity: 0, y: 30 },
-  visible: { opacity: 1, y: 0, transition: { duration: 0.45, } },
+  visible: { opacity: 1, y: 0, transition: { duration: 0.45 } },
 };
 
 function CategoryBadge({ category }: { category: string }) {
@@ -60,23 +76,60 @@ function CategoryBadge({ category }: { category: string }) {
   );
 }
 
+function SkeletonCard() {
+  return (
+    <div className="bg-[#111827] border border-[#1F2937] rounded-2xl overflow-hidden animate-pulse">
+      <div className="aspect-video bg-[#1F2937]" />
+      <div className="p-5 space-y-3">
+        <div className="flex gap-3">
+          <div className="h-3 bg-[#1F2937] rounded w-1/4" />
+          <div className="h-3 bg-[#1F2937] rounded w-1/4" />
+        </div>
+        <div className="h-5 bg-[#1F2937] rounded w-3/4" />
+        <div className="h-3 bg-[#1F2937] rounded w-full" />
+        <div className="h-3 bg-[#1F2937] rounded w-2/3" />
+        <div className="h-px bg-[#1F2937] w-full mt-2" />
+        <div className="flex justify-between items-center">
+          <div className="h-3 bg-[#1F2937] rounded w-1/3" />
+          <div className="h-3 bg-[#1F2937] rounded w-1/6" />
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export default function BlogsPage() {
+  const [allBlogs, setAllBlogs] = useState<Blog[]>([]);
+  const [loading, setLoading] = useState(true);
   const [activeCategory, setActiveCategory] = useState("All");
   const [search, setSearch] = useState("");
 
-  const filtered = blogs.filter((b) => {
+  useEffect(() => {
+    blogsService
+      .getAll({ page: 1, limit: 20 })
+      .then((res) => {
+        const items: Blog[] = res?.data ?? res ?? [];
+        setAllBlogs(items);
+      })
+      .catch(() => setAllBlogs([]))
+      .finally(() => setLoading(false));
+  }, []);
+
+  const filtered = allBlogs.filter((b) => {
     const matchCat =
       activeCategory === "All" || b.category === activeCategory;
+    const q = search.toLowerCase();
     const matchSearch =
-      b.title.toLowerCase().includes(search.toLowerCase()) ||
-      b.excerpt.toLowerCase().includes(search.toLowerCase()) ||
-      b.author.toLowerCase().includes(search.toLowerCase());
+      !q ||
+      b.title.toLowerCase().includes(q) ||
+      (b.excerpt ?? "").toLowerCase().includes(q) ||
+      (b.author ?? "").toLowerCase().includes(q);
     return matchCat && matchSearch;
   });
 
   return (
     <div className="min-h-screen bg-[#0B0F19]">
-      {/* ── Hero Banner ─────────────────────────────────────────── */}
+      {/* Hero Banner */}
       <div className="relative pt-32 pb-20 overflow-hidden">
         <div
           className="absolute inset-0 bg-cover bg-center"
@@ -110,14 +163,13 @@ export default function BlogsPage() {
       </div>
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-20 -mt-4">
-        {/* ── Search + Filters ────────────────────────────────────── */}
+        {/* Search + Filters */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5, delay: 0.2 }}
           className="mb-10"
         >
-          {/* Search */}
           <div className="relative mb-5">
             <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-[#6B7280]" />
             <input
@@ -129,9 +181,8 @@ export default function BlogsPage() {
             />
           </div>
 
-          {/* Category tabs */}
           <div className="flex items-center gap-2 overflow-x-auto scrollbar-hide pb-1 flex-wrap">
-            {categories.map((cat) => (
+            {filterCategories.map((cat) => (
               <button
                 key={cat}
                 onClick={() => setActiveCategory(cat)}
@@ -148,18 +199,26 @@ export default function BlogsPage() {
         </motion.div>
 
         {/* Results Count */}
-        <div className="flex items-center justify-between mb-6">
-          <p className="text-sm text-[#6B7280]">
-            Showing{" "}
-            <span className="font-semibold text-[#F5F5DC]">
-              {filtered.length}
-            </span>{" "}
-            {filtered.length === 1 ? "story" : "stories"}
-          </p>
-        </div>
+        {!loading && (
+          <div className="flex items-center justify-between mb-6">
+            <p className="text-sm text-[#6B7280]">
+              Showing{" "}
+              <span className="font-semibold text-[#F5F5DC]">
+                {filtered.length}
+              </span>{" "}
+              {filtered.length === 1 ? "story" : "stories"}
+            </p>
+          </div>
+        )}
 
-        {/* ── Blog Grid ──────────────────────────────────────────── */}
-        {filtered.length > 0 ? (
+        {/* Blog Grid */}
+        {loading ? (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {Array.from({ length: 6 }).map((_, i) => (
+              <SkeletonCard key={i} />
+            ))}
+          </div>
+        ) : filtered.length > 0 ? (
           <motion.div
             variants={containerVariants}
             initial="hidden"
@@ -167,7 +226,10 @@ export default function BlogsPage() {
             className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"
           >
             {filtered.map((blog) => (
-              <motion.div key={blog.id} variants={cardVariants}>
+              <motion.div
+                key={blog._id ?? blog.id}
+                variants={cardVariants}
+              >
                 <Link
                   href={`/blogs/${blog.slug}`}
                   className="group block h-full"
@@ -176,38 +238,46 @@ export default function BlogsPage() {
                     {/* Cover Image */}
                     <div className="relative aspect-video overflow-hidden">
                       <Image
-                        src={blog.coverImage}
+                        src={blog.coverImage || FALLBACK_IMAGE}
                         alt={blog.title}
                         fill
                         className="object-cover transition-transform duration-500 group-hover:scale-110"
                         sizes="(max-width: 768px) 100vw, (max-width: 1024px) 50vw, 33vw"
                       />
                       <div className="absolute inset-0 bg-gradient-to-t from-[#111827]/60 to-transparent" />
-                      <div className="absolute top-3 left-3">
-                        <CategoryBadge category={blog.category} />
-                      </div>
+                      {blog.category && (
+                        <div className="absolute top-3 left-3">
+                          <CategoryBadge category={blog.category} />
+                        </div>
+                      )}
                     </div>
 
                     {/* Content */}
                     <div className="p-5 flex flex-col flex-1">
                       <div className="flex items-center gap-4 mb-3">
-                        <div className="flex items-center gap-1.5 text-xs text-[#6B7280]">
-                          <Calendar className="w-3.5 h-3.5" />
-                          {blog.date}
-                        </div>
-                        <div className="flex items-center gap-1.5 text-xs text-[#6B7280]">
-                          <Clock className="w-3.5 h-3.5" />
-                          {blog.readTime}
-                        </div>
+                        {blog.date && (
+                          <div className="flex items-center gap-1.5 text-xs text-[#6B7280]">
+                            <Calendar className="w-3.5 h-3.5" />
+                            {blog.date}
+                          </div>
+                        )}
+                        {blog.readTime && (
+                          <div className="flex items-center gap-1.5 text-xs text-[#6B7280]">
+                            <Clock className="w-3.5 h-3.5" />
+                            {blog.readTime}
+                          </div>
+                        )}
                       </div>
 
                       <h2 className="font-bold text-white text-lg mb-2 line-clamp-2 group-hover:text-[#F97316] transition-colors font-heading flex-1 leading-snug">
                         {blog.title}
                       </h2>
 
-                      <p className="text-sm text-[#6B7280] line-clamp-2 mb-5 leading-relaxed">
-                        {blog.excerpt}
-                      </p>
+                      {blog.excerpt && (
+                        <p className="text-sm text-[#6B7280] line-clamp-2 mb-5 leading-relaxed">
+                          {blog.excerpt}
+                        </p>
+                      )}
 
                       <div className="flex items-center justify-between mt-auto pt-4 border-t border-[#1F2937]">
                         <div className="flex items-center gap-2.5">
@@ -215,7 +285,7 @@ export default function BlogsPage() {
                             <User className="w-4 h-4 text-[#F97316]" />
                           </div>
                           <span className="text-sm font-medium text-[#F5F5DC]">
-                            {blog.author}
+                            {blog.author ?? "HiddenPak"}
                           </span>
                         </div>
                         <span className="inline-flex items-center gap-1.5 text-sm font-semibold text-[#F97316] group-hover:gap-3 transition-all duration-200">

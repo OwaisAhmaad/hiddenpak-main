@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import Image from "next/image";
 import Link from "next/link";
@@ -17,7 +17,23 @@ import {
   Compass,
   Clock,
 } from "lucide-react";
-import { places } from "@/lib/data";
+import { placesService } from "@/lib/services/places.service";
+
+const FALLBACK_IMAGE =
+  "https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=800&q=80";
+
+interface Place {
+  _id: string;
+  name: string;
+  slug: string;
+  region: string;
+  category: string;
+  rating: number;
+  description: string;
+  image?: string;
+  altitude?: string;
+  bestTime?: string;
+}
 
 const regions = [
   "All Regions",
@@ -55,7 +71,7 @@ const containerVariants = {
 
 const cardVariants = {
   hidden: { opacity: 0, y: 32 },
-  visible: { opacity: 1, y: 0, transition: { duration: 0.45, } },
+  visible: { opacity: 1, y: 0, transition: { duration: 0.45 } },
 };
 
 function StarRating({ rating }: { rating: number }) {
@@ -75,26 +91,58 @@ function StarRating({ rating }: { rating: number }) {
   );
 }
 
+function SkeletonCard() {
+  return (
+    <div className="bg-[#111827] border border-[#1F2937] rounded-2xl overflow-hidden animate-pulse">
+      <div className="h-52 bg-[#1F2937]" />
+      <div className="p-4 space-y-3">
+        <div className="h-5 bg-[#1F2937] rounded w-3/4" />
+        <div className="h-3 bg-[#1F2937] rounded w-full" />
+        <div className="h-3 bg-[#1F2937] rounded w-2/3" />
+        <div className="flex gap-2">
+          <div className="h-3 bg-[#1F2937] rounded w-1/4" />
+          <div className="h-3 bg-[#1F2937] rounded w-1/4" />
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export default function PlacesPage() {
+  const [allPlaces, setAllPlaces] = useState<Place[]>([]);
+  const [loading, setLoading] = useState(true);
   const [activeRegion, setActiveRegion] = useState("All Regions");
   const [activeCategory, setActiveCategory] = useState("All Types");
   const [search, setSearch] = useState("");
 
-  const filtered = places.filter((p) => {
+  useEffect(() => {
+    placesService
+      .getAll({ page: 1, limit: 50 })
+      .then((res) => {
+        const items: Place[] = res?.data ?? res ?? [];
+        setAllPlaces(items);
+      })
+      .catch(() => setAllPlaces([]))
+      .finally(() => setLoading(false));
+  }, []);
+
+  const filtered = allPlaces.filter((p) => {
     const matchRegion =
       activeRegion === "All Regions" || p.region === activeRegion;
     const matchCategory =
       activeCategory === "All Types" || p.category === activeCategory;
+    const q = search.toLowerCase();
     const matchSearch =
-      p.name.toLowerCase().includes(search.toLowerCase()) ||
-      p.description.toLowerCase().includes(search.toLowerCase()) ||
-      p.region.toLowerCase().includes(search.toLowerCase());
+      !q ||
+      p.name.toLowerCase().includes(q) ||
+      (p.description ?? "").toLowerCase().includes(q) ||
+      p.region.toLowerCase().includes(q);
     return matchRegion && matchCategory && matchSearch;
   });
 
   return (
     <div className="min-h-screen bg-[#0B0F19]">
-      {/* ── Hero Banner ─────────────────────────────────────────── */}
+      {/* Hero Banner */}
       <div className="relative pt-32 pb-20 overflow-hidden">
         <div
           className="absolute inset-0 bg-cover bg-center"
@@ -123,23 +171,22 @@ export default function PlacesPage() {
               From the soaring peaks of the Karakoram to ancient Mughal cities —
               uncover{" "}
               <span className="text-[#F5F5DC] font-medium">
-                {places.length} extraordinary destinations
+                {loading ? "extraordinary" : `${allPlaces.length} extraordinary`}
               </span>{" "}
-              across the most breathtaking country on Earth.
+              destinations across the most breathtaking country on Earth.
             </p>
           </motion.div>
         </div>
       </div>
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-20 -mt-4">
-        {/* ── Search & Filters ────────────────────────────────────── */}
+        {/* Search & Filters */}
         <motion.div
           initial={{ opacity: 0, y: 24 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5, delay: 0.2 }}
           className="bg-[#111827] border border-[#1F2937] rounded-2xl p-6 mb-10 shadow-2xl"
         >
-          {/* Search */}
           <div className="relative mb-6">
             <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-[#6B7280]" />
             <input
@@ -206,38 +253,47 @@ export default function PlacesPage() {
         </motion.div>
 
         {/* Results count */}
-        <div className="flex items-center justify-between mb-6">
-          <p className="text-sm text-[#6B7280]">
-            Showing{" "}
-            <span className="font-semibold text-[#F5F5DC]">
-              {filtered.length}
-            </span>{" "}
-            {filtered.length === 1 ? "place" : "places"}
-            {search && (
-              <span>
-                {" "}
-                for &ldquo;<span className="text-[#F97316]">{search}</span>&rdquo;
-              </span>
+        {!loading && (
+          <div className="flex items-center justify-between mb-6">
+            <p className="text-sm text-[#6B7280]">
+              Showing{" "}
+              <span className="font-semibold text-[#F5F5DC]">
+                {filtered.length}
+              </span>{" "}
+              {filtered.length === 1 ? "place" : "places"}
+              {search && (
+                <span>
+                  {" "}
+                  for &ldquo;
+                  <span className="text-[#F97316]">{search}</span>&rdquo;
+                </span>
+              )}
+            </p>
+            {(activeRegion !== "All Regions" ||
+              activeCategory !== "All Types" ||
+              search) && (
+              <button
+                onClick={() => {
+                  setActiveRegion("All Regions");
+                  setActiveCategory("All Types");
+                  setSearch("");
+                }}
+                className="text-xs text-[#F97316] hover:text-[#F97316]/80 transition-colors font-medium"
+              >
+                Clear filters
+              </button>
             )}
-          </p>
-          {(activeRegion !== "All Regions" ||
-            activeCategory !== "All Types" ||
-            search) && (
-            <button
-              onClick={() => {
-                setActiveRegion("All Regions");
-                setActiveCategory("All Types");
-                setSearch("");
-              }}
-              className="text-xs text-[#F97316] hover:text-[#F97316]/80 transition-colors font-medium"
-            >
-              Clear filters
-            </button>
-          )}
-        </div>
+          </div>
+        )}
 
-        {/* ── Grid ───────────────────────────────────────────────── */}
-        {filtered.length > 0 ? (
+        {/* Grid */}
+        {loading ? (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5">
+            {Array.from({ length: 8 }).map((_, i) => (
+              <SkeletonCard key={i} />
+            ))}
+          </div>
+        ) : filtered.length > 0 ? (
           <motion.div
             variants={containerVariants}
             initial="hidden"
@@ -245,7 +301,7 @@ export default function PlacesPage() {
             className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5"
           >
             {filtered.map((place) => (
-              <motion.div key={place.id} variants={cardVariants}>
+              <motion.div key={place._id} variants={cardVariants}>
                 <Link
                   href={`/places/${place.slug}`}
                   className="group block h-full"
@@ -254,7 +310,7 @@ export default function PlacesPage() {
                     {/* Image */}
                     <div className="relative h-52 overflow-hidden">
                       <Image
-                        src={place.image}
+                        src={place.image || FALLBACK_IMAGE}
                         alt={place.name}
                         fill
                         className="object-cover transition-transform duration-500 group-hover:scale-110"
@@ -273,7 +329,7 @@ export default function PlacesPage() {
                       {/* Rating */}
                       <div className="absolute top-3 right-3 flex items-center gap-1 bg-black/60 backdrop-blur-sm text-white text-xs font-bold px-2.5 py-1.5 rounded-xl">
                         <Star className="w-3 h-3 text-amber-400 fill-amber-400" />
-                        {place.rating}
+                        {place.rating ?? "–"}
                       </div>
 
                       {/* Region badge */}
@@ -302,24 +358,26 @@ export default function PlacesPage() {
                         </span>
                       </div>
 
-                      <div className="flex items-center gap-4 mb-4 pt-3 border-t border-[#1F2937]">
-                        {place.altitude && (
-                          <div className="flex items-center gap-1.5">
-                            <Mountain className="w-3 h-3 text-[#6B7280]" />
-                            <span className="text-xs text-[#6B7280]">
-                              {place.altitude}
-                            </span>
-                          </div>
-                        )}
-                        {place.bestTime && (
-                          <div className="flex items-center gap-1.5">
-                            <Clock className="w-3 h-3 text-[#6B7280]" />
-                            <span className="text-xs text-[#6B7280]">
-                              {place.bestTime}
-                            </span>
-                          </div>
-                        )}
-                      </div>
+                      {(place.altitude || place.bestTime) && (
+                        <div className="flex items-center gap-4 mb-4 pt-3 border-t border-[#1F2937]">
+                          {place.altitude && (
+                            <div className="flex items-center gap-1.5">
+                              <Mountain className="w-3 h-3 text-[#6B7280]" />
+                              <span className="text-xs text-[#6B7280]">
+                                {place.altitude}
+                              </span>
+                            </div>
+                          )}
+                          {place.bestTime && (
+                            <div className="flex items-center gap-1.5">
+                              <Clock className="w-3 h-3 text-[#6B7280]" />
+                              <span className="text-xs text-[#6B7280]">
+                                {place.bestTime}
+                              </span>
+                            </div>
+                          )}
+                        </div>
+                      )}
 
                       <div className="inline-flex items-center gap-1.5 text-sm font-semibold text-[#F97316] group-hover:gap-3 transition-all duration-200 mt-auto">
                         Explore
