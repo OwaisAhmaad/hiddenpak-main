@@ -1,9 +1,10 @@
 export declare class CreatePlaceDto {
     name: string;
-    region: string;
-    category: string;
     description: string;
-    longDescription: string;
+    location?: string;
+    region?: string;
+    category?: string;
+    longDescription?: string;
     rating?: number;
     altitude?: string;
     bestTime?: string;
@@ -11,9 +12,10 @@ export declare class CreatePlaceDto {
 }
 export declare class UpdatePlaceDto {
     name?: string;
+    description?: string;
+    location?: string;
     region?: string;
     category?: string;
-    description?: string;
     longDescription?: string;
     rating?: number;
     altitude?: string;

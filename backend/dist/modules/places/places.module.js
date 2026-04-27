@@ -22,7 +22,7 @@ exports.PlacesModule = PlacesModule = __decorate([
         imports: [
             mongoose_1.MongooseModule.forFeature([{ name: place_schema_1.Place.name, schema: place_schema_1.PlaceSchema }]),
         ],
-        controllers: [places_controller_1.PlacesController],
+        controllers: [places_controller_1.PlacesPublicController, places_controller_1.PlacesAdminController],
         providers: [places_service_1.PlacesService, places_repository_1.PlacesRepository, cloudinary_service_1.CloudinaryService],
     })
 ], PlacesModule);

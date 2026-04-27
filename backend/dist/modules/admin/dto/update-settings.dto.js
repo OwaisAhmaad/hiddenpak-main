@@ -11,60 +11,72 @@ var __metadata = (this && this.__metadata) || function (k, v) {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.UpdateSettingsDto = void 0;
 const class_validator_1 = require("class-validator");
+const swagger_1 = require("@nestjs/swagger");
 class UpdateSettingsDto {
 }
 exports.UpdateSettingsDto = UpdateSettingsDto;
 __decorate([
+    (0, swagger_1.ApiPropertyOptional)({ example: 'HiddenPak', description: 'Site display name' }),
     (0, class_validator_1.IsOptional)(),
     (0, class_validator_1.IsString)(),
     __metadata("design:type", String)
 ], UpdateSettingsDto.prototype, "siteName", void 0);
 __decorate([
+    (0, swagger_1.ApiPropertyOptional)({ example: "Discover Pakistan's Hidden Gems", description: 'Site tagline' }),
     (0, class_validator_1.IsOptional)(),
     (0, class_validator_1.IsString)(),
     __metadata("design:type", String)
 ], UpdateSettingsDto.prototype, "siteTagline", void 0);
 __decorate([
+    (0, swagger_1.ApiPropertyOptional)({ example: 'contact@hiddenpak.com' }),
     (0, class_validator_1.IsOptional)(),
     (0, class_validator_1.IsEmail)(),
     __metadata("design:type", String)
 ], UpdateSettingsDto.prototype, "contactEmail", void 0);
 __decorate([
+    (0, swagger_1.ApiPropertyOptional)({ example: '+92-300-1234567' }),
     (0, class_validator_1.IsOptional)(),
     (0, class_validator_1.IsString)(),
     __metadata("design:type", String)
 ], UpdateSettingsDto.prototype, "contactPhone", void 0);
 __decorate([
+    (0, swagger_1.ApiPropertyOptional)({ example: 'Islamabad, Pakistan' }),
     (0, class_validator_1.IsOptional)(),
     (0, class_validator_1.IsString)(),
     __metadata("design:type", String)
 ], UpdateSettingsDto.prototype, "address", void 0);
 __decorate([
+    (0, swagger_1.ApiPropertyOptional)({ example: 'https://facebook.com/HiddenPak' }),
     (0, class_validator_1.IsOptional)(),
     (0, class_validator_1.IsString)(),
     __metadata("design:type", String)
 ], UpdateSettingsDto.prototype, "facebookUrl", void 0);
 __decorate([
+    (0, swagger_1.ApiPropertyOptional)({ example: 'https://instagram.com/hiddenpak' }),
     (0, class_validator_1.IsOptional)(),
     (0, class_validator_1.IsString)(),
     __metadata("design:type", String)
 ], UpdateSettingsDto.prototype, "instagramUrl", void 0);
 __decorate([
+    (0, swagger_1.ApiPropertyOptional)({ example: 'https://twitter.com/HiddenPak' }),
     (0, class_validator_1.IsOptional)(),
     (0, class_validator_1.IsString)(),
     __metadata("design:type", String)
 ], UpdateSettingsDto.prototype, "twitterUrl", void 0);
 __decorate([
+    (0, swagger_1.ApiPropertyOptional)({ example: 'https://youtube.com/@HiddenPak' }),
     (0, class_validator_1.IsOptional)(),
     (0, class_validator_1.IsString)(),
     __metadata("design:type", String)
 ], UpdateSettingsDto.prototype, "youtubeUrl", void 0);
 __decorate([
+    (0, swagger_1.ApiPropertyOptional)({ example: false, description: 'Put site in maintenance mode' }),
     (0, class_validator_1.IsOptional)(),
     (0, class_validator_1.IsBoolean)(),
     __metadata("design:type", Boolean)
 ], UpdateSettingsDto.prototype, "maintenanceMode", void 0);
 __decorate([
+    (0, swagger_1.ApiPropertyOptional)({ example: true, description: 'Allow new user registrations' }),
     (0, class_validator_1.IsOptional)(),
     (0, class_validator_1.IsBoolean)(),
     __metadata("design:type", Boolean)

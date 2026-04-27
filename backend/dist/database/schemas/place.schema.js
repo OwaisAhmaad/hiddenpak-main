@@ -23,11 +23,11 @@ __decorate([
     __metadata("design:type", String)
 ], Place.prototype, "slug", void 0);
 __decorate([
-    (0, mongoose_1.Prop)({ required: true }),
+    (0, mongoose_1.Prop)({ default: '' }),
     __metadata("design:type", String)
 ], Place.prototype, "region", void 0);
 __decorate([
-    (0, mongoose_1.Prop)({ required: true }),
+    (0, mongoose_1.Prop)({ default: '' }),
     __metadata("design:type", String)
 ], Place.prototype, "category", void 0);
 __decorate([
@@ -35,9 +35,13 @@ __decorate([
     __metadata("design:type", String)
 ], Place.prototype, "description", void 0);
 __decorate([
-    (0, mongoose_1.Prop)({ required: true }),
+    (0, mongoose_1.Prop)({ default: '' }),
     __metadata("design:type", String)
 ], Place.prototype, "longDescription", void 0);
+__decorate([
+    (0, mongoose_1.Prop)({ default: '' }),
+    __metadata("design:type", String)
+], Place.prototype, "location", void 0);
 __decorate([
     (0, mongoose_1.Prop)({ default: '' }),
     __metadata("design:type", String)

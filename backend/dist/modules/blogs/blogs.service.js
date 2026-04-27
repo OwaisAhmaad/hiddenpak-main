@@ -15,16 +15,24 @@ const cloudinary_service_1 = require("../../common/cloudinary.service");
 const pagination_util_1 = require("../../common/pagination.util");
 const slug_util_1 = require("../../common/slug.util");
 const blogs_repository_1 = require("./blogs.repository");
+const blog_dto_1 = require("./dto/blog.dto");
 let BlogsService = class BlogsService {
     constructor(repo, cloudinary) {
         this.repo = repo;
         this.cloudinary = cloudinary;
     }
+    resolvePublished(status, published) {
+        if (status === blog_dto_1.BlogStatus.PUBLISHED)
+            return true;
+        if (status === blog_dto_1.BlogStatus.DRAFT)
+            return false;
+        return published ?? true;
+    }
     async create(dto, file) {
         const slug = (0, slug_util_1.generateSlug)(dto.title);
         const exists = await this.repo.findOne({ slug });
         if (exists)
-            throw new common_1.ConflictException('Slug already exists');
+            throw new common_1.ConflictException(`Slug "${slug}" already exists`);
         let coverImage = '';
         let coverImagePublicId = '';
         if (file?.buffer) {
@@ -32,9 +40,13 @@ let BlogsService = class BlogsService {
             coverImage = r.url;
             coverImagePublicId = r.publicId;
         }
+        const published = this.resolvePublished(dto.status, dto.published);
+        const excerpt = dto.excerpt ?? dto.content.slice(0, 150).replace(/\s+\S*$/, '') + '…';
         const blog = await this.repo.create({
             ...dto,
             slug,
+            excerpt,
+            published,
             coverImage,
             coverImagePublicId,
         });
@@ -57,8 +69,10 @@ let BlogsService = class BlogsService {
             meta: (0, pagination_util_1.buildMeta)(total, page, limit),
         };
     }
-    async getBySlug(slug) {
-        const blog = await this.repo.findOne({ slug });
+    async getBySlug(slugOrId) {
+        let blog = await this.repo.findOne({ slug: slugOrId });
+        if (!blog)
+            blog = await this.repo.findById(slugOrId).catch(() => null);
         if (!blog)
             throw new common_1.NotFoundException('Blog not found');
         return { message: 'Blog retrieved successfully', data: blog };
@@ -68,9 +82,12 @@ let BlogsService = class BlogsService {
         if (!blog)
             throw new common_1.NotFoundException('Blog not found');
         const updates = { ...dto };
+        if (dto.status !== undefined) {
+            updates.published = this.resolvePublished(dto.status);
+        }
         if (file?.buffer) {
             if (blog.coverImagePublicId) {
-                await this.cloudinary.delete(blog.coverImagePublicId);
+                await this.cloudinary.delete(blog.coverImagePublicId).catch(() => null);
             }
             const r = await this.cloudinary.upload(file.buffer, 'hiddenpak/blogs');
             updates.coverImage = r.url;
@@ -86,10 +103,10 @@ let BlogsService = class BlogsService {
         if (!blog)
             throw new common_1.NotFoundException('Blog not found');
         if (blog.coverImagePublicId) {
-            await this.cloudinary.delete(blog.coverImagePublicId);
+            await this.cloudinary.delete(blog.coverImagePublicId).catch(() => null);
         }
         await this.repo.deleteById(id);
-        return { message: 'Blog deleted successfully', data: null };
+        return { message: 'Blog deleted successfully', data: { success: true } };
     }
 };
 exports.BlogsService = BlogsService;

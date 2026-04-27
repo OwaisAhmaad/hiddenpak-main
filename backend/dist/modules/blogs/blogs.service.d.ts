@@ -5,6 +5,7 @@ export declare class BlogsService {
     private repo;
     private cloudinary;
     constructor(repo: BlogsRepository, cloudinary: CloudinaryService);
+    private resolvePublished;
     create(dto: CreateBlogDto, file?: Express.Multer.File): Promise<{
         message: string;
         data: import("../../database/schemas/blog.schema").BlogDocument;
@@ -20,7 +21,7 @@ export declare class BlogsService {
         data: import("../../database/schemas/blog.schema").BlogDocument[];
         meta: import("../../common/pagination.util").PaginationMeta;
     }>;
-    getBySlug(slug: string): Promise<{
+    getBySlug(slugOrId: string): Promise<{
         message: string;
         data: import("../../database/schemas/blog.schema").BlogDocument;
     }>;
@@ -30,6 +31,8 @@ export declare class BlogsService {
     }>;
     remove(id: string): Promise<{
         message: string;
-        data: any;
+        data: {
+            success: boolean;
+        };
     }>;
 }

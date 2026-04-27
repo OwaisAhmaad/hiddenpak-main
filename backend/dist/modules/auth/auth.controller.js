@@ -14,6 +14,7 @@ var __param = (this && this.__param) || function (paramIndex, decorator) {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.AuthController = void 0;
 const common_1 = require("@nestjs/common");
+const swagger_1 = require("@nestjs/swagger");
 const auth_service_1 = require("./auth.service");
 const login_dto_1 = require("./dto/login.dto");
 const jwt_auth_guard_1 = require("./guards/jwt-auth.guard");
@@ -35,6 +36,10 @@ exports.AuthController = AuthController;
 __decorate([
     (0, common_1.Post)('login'),
     (0, common_1.HttpCode)(common_1.HttpStatus.OK),
+    (0, swagger_1.ApiOperation)({ summary: 'Admin login', description: 'Returns accessToken (15 min) + refreshToken (7 days)' }),
+    (0, swagger_1.ApiBody)({ type: login_dto_1.LoginDto }),
+    (0, swagger_1.ApiResponse)({ status: 200, description: 'Login successful — returns JWT tokens', schema: { example: { success: true, message: 'Login successful', data: { accessToken: 'eyJ...', refreshToken: 'eyJ...' } } } }),
+    (0, swagger_1.ApiResponse)({ status: 401, description: 'Invalid credentials' }),
     __param(0, (0, common_1.Body)()),
     __metadata("design:type", Function),
     __metadata("design:paramtypes", [login_dto_1.LoginDto]),
@@ -44,6 +49,10 @@ __decorate([
     (0, common_1.Post)('refresh'),
     (0, common_1.UseGuards)(jwt_auth_guard_1.JwtRefreshGuard),
     (0, common_1.HttpCode)(common_1.HttpStatus.OK),
+    (0, swagger_1.ApiBearerAuth)('access-token'),
+    (0, swagger_1.ApiOperation)({ summary: 'Refresh access token', description: 'Send refresh token in Authorization header to get a new access token' }),
+    (0, swagger_1.ApiResponse)({ status: 200, description: 'New accessToken issued' }),
+    (0, swagger_1.ApiResponse)({ status: 403, description: 'Invalid or expired refresh token' }),
     __param(0, (0, common_1.Request)()),
     __metadata("design:type", Function),
     __metadata("design:paramtypes", [Object]),
@@ -53,12 +62,17 @@ __decorate([
     (0, common_1.Post)('logout'),
     (0, common_1.UseGuards)(jwt_auth_guard_1.JwtAuthGuard),
     (0, common_1.HttpCode)(common_1.HttpStatus.OK),
+    (0, swagger_1.ApiBearerAuth)('access-token'),
+    (0, swagger_1.ApiOperation)({ summary: 'Logout', description: 'Invalidates the refresh token in DB' }),
+    (0, swagger_1.ApiResponse)({ status: 200, description: 'Logged out successfully' }),
+    (0, swagger_1.ApiResponse)({ status: 401, description: 'No valid token' }),
     __param(0, (0, common_1.Request)()),
     __metadata("design:type", Function),
     __metadata("design:paramtypes", [Object]),
     __metadata("design:returntype", void 0)
 ], AuthController.prototype, "logout", null);
 exports.AuthController = AuthController = __decorate([
+    (0, swagger_1.ApiTags)('Auth'),
     (0, common_1.Controller)('auth'),
     __metadata("design:paramtypes", [auth_service_1.AuthService])
 ], AuthController);

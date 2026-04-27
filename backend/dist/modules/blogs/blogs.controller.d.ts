@@ -1,6 +1,6 @@
 import { BlogsService } from './blogs.service';
 import { CreateBlogDto, UpdateBlogDto } from './dto/blog.dto';
-export declare class BlogsController {
+export declare class BlogsPublicController {
     private readonly blogsService;
     constructor(blogsService: BlogsService);
     getAll(page?: string, limit?: string, search?: string, category?: string, status?: string): Promise<{
@@ -9,6 +9,19 @@ export declare class BlogsController {
         meta: import("../../common/pagination.util").PaginationMeta;
     }>;
     getBySlug(slug: string): Promise<{
+        message: string;
+        data: import("../../database/schemas/blog.schema").BlogDocument;
+    }>;
+}
+export declare class BlogsAdminController {
+    private readonly blogsService;
+    constructor(blogsService: BlogsService);
+    adminGetAll(page?: string, limit?: string, search?: string, category?: string, status?: string): Promise<{
+        message: string;
+        data: import("../../database/schemas/blog.schema").BlogDocument[];
+        meta: import("../../common/pagination.util").PaginationMeta;
+    }>;
+    adminGetOne(id: string): Promise<{
         message: string;
         data: import("../../database/schemas/blog.schema").BlogDocument;
     }>;
@@ -22,6 +35,8 @@ export declare class BlogsController {
     }>;
     remove(id: string): Promise<{
         message: string;
-        data: any;
+        data: {
+            success: boolean;
+        };
     }>;
 }

@@ -12,31 +12,42 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.CloudinaryService = void 0;
 const common_1 = require("@nestjs/common");
 const config_1 = require("@nestjs/config");
-const cloudinary_1 = require("cloudinary");
-const streamifier = require("streamifier");
+const fs = require("fs");
+const path = require("path");
+const crypto = require("crypto");
 let CloudinaryService = class CloudinaryService {
     constructor(config) {
-        cloudinary_1.v2.config({
-            cloud_name: config.get('CLOUDINARY_CLOUD_NAME'),
-            api_key: config.get('CLOUDINARY_API_KEY'),
-            api_secret: config.get('CLOUDINARY_API_SECRET'),
-        });
+        this.baseUrl =
+            config.get('BASE_URL') ?? `http://localhost:${config.get('PORT') ?? 4000}`;
+        this.uploadDir = path.join(process.cwd(), 'uploads');
+        if (!fs.existsSync(this.uploadDir)) {
+            fs.mkdirSync(this.uploadDir, { recursive: true });
+        }
     }
-    upload(buffer, folder = 'hiddenpak') {
-        return new Promise((resolve, reject) => {
-            const stream = cloudinary_1.v2.uploader.upload_stream({ folder, resource_type: 'image' }, (err, result) => {
-                if (err || !result) {
-                    reject(new common_1.InternalServerErrorException('Upload failed'));
-                }
-                else {
-                    resolve({ url: result.secure_url, publicId: result.public_id });
-                }
-            });
-            streamifier.createReadStream(buffer).pipe(stream);
-        });
+    async upload(buffer, folder = 'hiddenpak') {
+        try {
+            const dir = path.join(this.uploadDir, folder);
+            if (!fs.existsSync(dir))
+                fs.mkdirSync(dir, { recursive: true });
+            const filename = `${crypto.randomUUID()}.jpg`;
+            const filepath = path.join(dir, filename);
+            fs.writeFileSync(filepath, buffer);
+            const publicId = `${folder}/${filename}`;
+            const url = `${this.baseUrl}/uploads/${publicId}`;
+            return { url, publicId };
+        }
+        catch {
+            throw new common_1.InternalServerErrorException('File upload failed');
+        }
     }
     async delete(publicId) {
-        return cloudinary_1.v2.uploader.destroy(publicId);
+        try {
+            const filepath = path.join(this.uploadDir, publicId);
+            if (fs.existsSync(filepath))
+                fs.unlinkSync(filepath);
+        }
+        catch {
+        }
     }
 };
 exports.CloudinaryService = CloudinaryService;

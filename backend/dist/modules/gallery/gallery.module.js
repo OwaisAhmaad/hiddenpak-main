@@ -24,7 +24,7 @@ exports.GalleryModule = GalleryModule = __decorate([
                 { name: gallery_schema_1.Gallery.name, schema: gallery_schema_1.GallerySchema },
             ]),
         ],
-        controllers: [gallery_controller_1.GalleryController],
+        controllers: [gallery_controller_1.GalleryPublicController, gallery_controller_1.GalleryAdminController],
         providers: [gallery_service_1.GalleryService, gallery_repository_1.GalleryRepository, cloudinary_service_1.CloudinaryService],
     })
 ], GalleryModule);

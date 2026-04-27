@@ -14,6 +14,7 @@ var __param = (this && this.__param) || function (paramIndex, decorator) {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.AdminController = void 0;
 const common_1 = require("@nestjs/common");
+const swagger_1 = require("@nestjs/swagger");
 const jwt_auth_guard_1 = require("../auth/guards/jwt-auth.guard");
 const roles_guard_1 = require("../auth/guards/roles.guard");
 const roles_decorator_1 = require("../auth/decorators/roles.decorator");
@@ -40,6 +41,25 @@ let AdminController = class AdminController {
 exports.AdminController = AdminController;
 __decorate([
     (0, common_1.Get)('profile'),
+    (0, swagger_1.ApiOperation)({ summary: 'Get admin profile' }),
+    (0, swagger_1.ApiResponse)({
+        status: 200,
+        description: 'Admin profile data',
+        schema: {
+            example: {
+                success: true,
+                message: 'OK',
+                data: {
+                    _id: '64f...',
+                    name: 'Admin User',
+                    email: 'admin@hiddenpak.com',
+                    role: 'admin',
+                    createdAt: '2024-01-01T00:00:00.000Z',
+                },
+            },
+        },
+    }),
+    (0, swagger_1.ApiResponse)({ status: 401, description: 'Unauthorized — missing or invalid JWT' }),
     __param(0, (0, common_1.Request)()),
     __metadata("design:type", Function),
     __metadata("design:paramtypes", [Object]),
@@ -47,6 +67,25 @@ __decorate([
 ], AdminController.prototype, "getProfile", null);
 __decorate([
     (0, common_1.Put)('profile'),
+    (0, swagger_1.ApiOperation)({ summary: 'Update admin profile / change password' }),
+    (0, swagger_1.ApiResponse)({
+        status: 200,
+        description: 'Profile updated successfully',
+        schema: {
+            example: {
+                success: true,
+                message: 'Profile updated successfully',
+                data: {
+                    _id: '64f...',
+                    name: 'New Name',
+                    email: 'new@hiddenpak.com',
+                    role: 'admin',
+                },
+            },
+        },
+    }),
+    (0, swagger_1.ApiResponse)({ status: 400, description: 'Validation error or incorrect current password' }),
+    (0, swagger_1.ApiResponse)({ status: 401, description: 'Unauthorized' }),
     __param(0, (0, common_1.Request)()),
     __param(1, (0, common_1.Body)()),
     __metadata("design:type", Function),
@@ -55,18 +94,62 @@ __decorate([
 ], AdminController.prototype, "updateProfile", null);
 __decorate([
     (0, common_1.Get)('settings'),
+    (0, swagger_1.ApiOperation)({ summary: 'Get site settings' }),
+    (0, swagger_1.ApiResponse)({
+        status: 200,
+        description: 'Current site settings',
+        schema: {
+            example: {
+                success: true,
+                message: 'OK',
+                data: {
+                    siteName: 'HiddenPak',
+                    siteTagline: "Discover Pakistan's Hidden Gems",
+                    contactEmail: 'contact@hiddenpak.com',
+                    contactPhone: '+92-300-1234567',
+                    address: 'Islamabad, Pakistan',
+                    facebookUrl: 'https://facebook.com/HiddenPak',
+                    instagramUrl: 'https://instagram.com/hiddenpak',
+                    twitterUrl: 'https://twitter.com/HiddenPak',
+                    youtubeUrl: 'https://youtube.com/@HiddenPak',
+                    maintenanceMode: false,
+                    allowRegistration: true,
+                },
+            },
+        },
+    }),
+    (0, swagger_1.ApiResponse)({ status: 401, description: 'Unauthorized' }),
     __metadata("design:type", Function),
     __metadata("design:paramtypes", []),
     __metadata("design:returntype", void 0)
 ], AdminController.prototype, "getSettings", null);
 __decorate([
     (0, common_1.Patch)('settings'),
+    (0, swagger_1.ApiOperation)({ summary: 'Update site settings (partial)' }),
+    (0, swagger_1.ApiResponse)({
+        status: 200,
+        description: 'Settings updated successfully',
+        schema: {
+            example: {
+                success: true,
+                message: 'Settings updated successfully',
+                data: {
+                    siteName: 'HiddenPak',
+                    maintenanceMode: false,
+                },
+            },
+        },
+    }),
+    (0, swagger_1.ApiResponse)({ status: 400, description: 'Validation error' }),
+    (0, swagger_1.ApiResponse)({ status: 401, description: 'Unauthorized' }),
     __param(0, (0, common_1.Body)()),
     __metadata("design:type", Function),
     __metadata("design:paramtypes", [update_settings_dto_1.UpdateSettingsDto]),
     __metadata("design:returntype", void 0)
 ], AdminController.prototype, "updateSettings", null);
 exports.AdminController = AdminController = __decorate([
+    (0, swagger_1.ApiTags)('Admin — Profile & Settings'),
+    (0, swagger_1.ApiBearerAuth)('access-token'),
     (0, common_1.Controller)('admin'),
     (0, common_1.UseGuards)(jwt_auth_guard_1.JwtAuthGuard, roles_guard_1.RolesGuard),
     (0, roles_decorator_1.Roles)('admin'),

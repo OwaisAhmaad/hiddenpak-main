@@ -1,20 +1,42 @@
 import { ValidationPipe } from '@nestjs/common';
 import { NestFactory } from '@nestjs/core';
+import { NestExpressApplication } from '@nestjs/platform-express';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
+import * as path from 'path';
+import * as fs from 'fs';
 import { AppModule } from './app.module';
 import { AllExceptionsFilter } from './common/http-exception.filter';
 import { ResponseInterceptor } from './common/response.interceptor';
 
 async function bootstrap() {
-  const app = await NestFactory.create(AppModule);
+  const app = await NestFactory.create<NestExpressApplication>(AppModule);
 
   app.setGlobalPrefix('api/v1');
 
+  // ── CORS ─────────────────────────────────────────────────────────
+  const origin = (process.env.FRONTEND_URL ?? 'http://localhost:3000')
+    .split(',')
+    .map((s) => s.trim());
+
   app.enableCors({
-    origin: process.env.FRONTEND_URL ?? 'http://localhost:3000',
+    origin,
     credentials: true,
   });
 
+  // ── Static uploads ────────────────────────────────────────────────
+  // Serve  /uploads/**  files that were saved by LocalStorageService
+  const uploadsDir = path.join(process.cwd(), 'uploads');
+  if (!fs.existsSync(uploadsDir)) fs.mkdirSync(uploadsDir, { recursive: true });
+
+  app.useStaticAssets(uploadsDir, {
+    prefix: '/uploads',
+    setHeaders: (res) => {
+      res.setHeader('Cross-Origin-Resource-Policy', 'cross-origin');
+      res.setHeader('Access-Control-Allow-Origin', '*');
+    },
+  });
+
+  // ── Global pipes / filters / interceptors ─────────────────────────
   app.useGlobalPipes(
     new ValidationPipe({
       whitelist: true,
@@ -26,7 +48,7 @@ async function bootstrap() {
   app.useGlobalInterceptors(new ResponseInterceptor());
   app.useGlobalFilters(new AllExceptionsFilter());
 
-  /* ── Swagger ─────────────────────────────────────────────────── */
+  /* ── Swagger ─────────────────────────────────────────────────────── */
   const config = new DocumentBuilder()
     .setTitle('HiddenPak API')
     .setDescription(
@@ -47,7 +69,8 @@ Every response is wrapped:
 
 ### File Uploads
 Upload endpoints accept \`multipart/form-data\`.
-Only **JPEG, PNG, WEBP** accepted — others return 400.`,
+Only **JPEG, PNG, WEBP** accepted — others return 400.
+Images are stored on-server at \`/uploads/<folder>/<uuid>.jpg\`.`,
     )
     .setVersion('1.0')
     .setContact('HiddenPak Team', 'https://hiddenpak.com', 'hello@hiddenpak.com')
@@ -74,7 +97,7 @@ Only **JPEG, PNG, WEBP** accepted — others return 400.`,
 
   SwaggerModule.setup('api/docs', app, document, {
     swaggerOptions: {
-      persistAuthorization: true,       // keeps Bearer token across refreshes
+      persistAuthorization: true,
       tagsSorter: 'alpha',
       operationsSorter: 'method',
       docExpansion: 'list',
@@ -95,6 +118,7 @@ Only **JPEG, PNG, WEBP** accepted — others return 400.`,
   const port = process.env.PORT ?? 4000;
   await app.listen(port);
   console.log(`🚀 HiddenPak API   → http://localhost:${port}/api/v1`);
+  console.log(`📁 Uploads served  → http://localhost:${port}/uploads/`);
   console.log(`📖 Swagger Docs    → http://localhost:${port}/api/docs`);
 }
 

@@ -14,6 +14,7 @@ var __param = (this && this.__param) || function (paramIndex, decorator) {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.CategoriesController = void 0;
 const common_1 = require("@nestjs/common");
+const swagger_1 = require("@nestjs/swagger");
 const categories_service_1 = require("./categories.service");
 const category_dto_1 = require("./dto/category.dto");
 const jwt_auth_guard_1 = require("../auth/guards/jwt-auth.guard");
@@ -39,6 +40,22 @@ let CategoriesController = class CategoriesController {
 exports.CategoriesController = CategoriesController;
 __decorate([
     (0, common_1.Get)('categories'),
+    (0, swagger_1.ApiTags)('Categories — Public'),
+    (0, swagger_1.ApiOperation)({ summary: 'List all categories', description: 'Returns all categories. Filter by type using the optional query param.' }),
+    (0, swagger_1.ApiQuery)({ name: 'type', required: false, enum: ['village', 'city', 'other'], description: 'Filter by category type' }),
+    (0, swagger_1.ApiResponse)({
+        status: 200,
+        description: 'List of categories',
+        schema: {
+            example: {
+                success: true,
+                message: 'OK',
+                data: [
+                    { _id: '64f...', name: 'Mountains', slug: 'mountains', type: 'other', description: 'Scenic peaks', createdAt: '2024-01-01T00:00:00.000Z' },
+                ],
+            },
+        },
+    }),
     __param(0, (0, common_1.Query)('type')),
     __metadata("design:type", Function),
     __metadata("design:paramtypes", [String]),
@@ -46,6 +63,22 @@ __decorate([
 ], CategoriesController.prototype, "getAll", null);
 __decorate([
     (0, common_1.Post)('admin/categories'),
+    (0, swagger_1.ApiTags)('Categories — Admin'),
+    (0, swagger_1.ApiBearerAuth)('access-token'),
+    (0, swagger_1.ApiOperation)({ summary: 'Create a category (admin)' }),
+    (0, swagger_1.ApiResponse)({
+        status: 201,
+        description: 'Category created',
+        schema: {
+            example: {
+                success: true,
+                message: 'Category created successfully',
+                data: { _id: '64f...', name: 'Mountains', slug: 'mountains', type: 'other', description: '' },
+            },
+        },
+    }),
+    (0, swagger_1.ApiResponse)({ status: 400, description: 'Validation error' }),
+    (0, swagger_1.ApiResponse)({ status: 401, description: 'Unauthorized' }),
     (0, common_1.UseGuards)(jwt_auth_guard_1.JwtAuthGuard, roles_guard_1.RolesGuard),
     (0, roles_decorator_1.Roles)('admin'),
     (0, common_1.HttpCode)(common_1.HttpStatus.CREATED),
@@ -56,6 +89,24 @@ __decorate([
 ], CategoriesController.prototype, "create", null);
 __decorate([
     (0, common_1.Patch)('admin/categories/:id'),
+    (0, swagger_1.ApiTags)('Categories — Admin'),
+    (0, swagger_1.ApiBearerAuth)('access-token'),
+    (0, swagger_1.ApiOperation)({ summary: 'Update a category (admin)' }),
+    (0, swagger_1.ApiParam)({ name: 'id', description: 'MongoDB ObjectId of the category' }),
+    (0, swagger_1.ApiResponse)({
+        status: 200,
+        description: 'Category updated',
+        schema: {
+            example: {
+                success: true,
+                message: 'Category updated successfully',
+                data: { _id: '64f...', name: 'Valleys', slug: 'valleys', type: 'village', description: 'Beautiful valleys' },
+            },
+        },
+    }),
+    (0, swagger_1.ApiResponse)({ status: 400, description: 'Validation error' }),
+    (0, swagger_1.ApiResponse)({ status: 401, description: 'Unauthorized' }),
+    (0, swagger_1.ApiResponse)({ status: 404, description: 'Category not found' }),
     (0, common_1.UseGuards)(jwt_auth_guard_1.JwtAuthGuard, roles_guard_1.RolesGuard),
     (0, roles_decorator_1.Roles)('admin'),
     __param(0, (0, common_1.Param)('id')),
@@ -66,6 +117,23 @@ __decorate([
 ], CategoriesController.prototype, "update", null);
 __decorate([
     (0, common_1.Delete)('admin/categories/:id'),
+    (0, swagger_1.ApiTags)('Categories — Admin'),
+    (0, swagger_1.ApiBearerAuth)('access-token'),
+    (0, swagger_1.ApiOperation)({ summary: 'Delete a category (admin)' }),
+    (0, swagger_1.ApiParam)({ name: 'id', description: 'MongoDB ObjectId of the category' }),
+    (0, swagger_1.ApiResponse)({
+        status: 200,
+        description: 'Category deleted',
+        schema: {
+            example: {
+                success: true,
+                message: 'Category deleted successfully',
+                data: { success: true },
+            },
+        },
+    }),
+    (0, swagger_1.ApiResponse)({ status: 401, description: 'Unauthorized' }),
+    (0, swagger_1.ApiResponse)({ status: 404, description: 'Category not found' }),
     (0, common_1.UseGuards)(jwt_auth_guard_1.JwtAuthGuard, roles_guard_1.RolesGuard),
     (0, roles_decorator_1.Roles)('admin'),
     (0, common_1.HttpCode)(common_1.HttpStatus.OK),

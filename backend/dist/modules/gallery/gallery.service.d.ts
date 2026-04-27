@@ -6,10 +6,44 @@ export declare class GalleryService {
     private repo;
     private cloudinary;
     constructor(repo: GalleryRepository, cloudinary: CloudinaryService);
-    upload(file: Express.Multer.File, dto: CreateGalleryDto): Promise<import("../../database/schemas/gallery.schema").GalleryDocument>;
+    upload(file: Express.Multer.File | undefined, dto: CreateGalleryDto): Promise<{
+        message: string;
+        data: {
+            id: any;
+            imageUrl: string;
+            caption: string;
+            location: string;
+            height: string;
+            createdAt: any;
+        };
+    }>;
     getAll(query: PaginationQuery): Promise<{
-        data: import("../../database/schemas/gallery.schema").GalleryDocument[];
+        message: string;
+        data: {
+            id: any;
+            imageUrl: string;
+            caption: string;
+            location: string;
+            height: string;
+            createdAt: any;
+        }[];
         meta: import("../../common/pagination.util").PaginationMeta;
     }>;
-    remove(id: string): Promise<import("../../database/schemas/gallery.schema").GalleryDocument>;
+    getById(id: string): Promise<{
+        message: string;
+        data: {
+            id: any;
+            imageUrl: string;
+            caption: string;
+            location: string;
+            height: string;
+            createdAt: any;
+        };
+    }>;
+    remove(id: string): Promise<{
+        message: string;
+        data: {
+            success: boolean;
+        };
+    }>;
 }

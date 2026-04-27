@@ -4,6 +4,7 @@ export declare class Gallery {
     url: string;
     publicId: string;
     alt: string;
+    caption: string;
     location: string;
     height: string;
 }

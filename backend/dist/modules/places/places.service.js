@@ -23,70 +23,79 @@ let PlacesService = class PlacesService {
     async create(dto, file) {
         const slug = (0, slug_util_1.generateSlug)(dto.name);
         if (await this.repo.findOne({ slug })) {
-            throw new common_1.ConflictException('Place already exists');
+            throw new common_1.ConflictException(`Place "${dto.name}" already exists`);
         }
         let image = '';
         let imagePublicId = '';
-        if (file) {
+        if (file?.buffer) {
             const r = await this.cloudinary.upload(file.buffer, 'hiddenpak/places');
             image = r.url;
             imagePublicId = r.publicId;
         }
-        return this.repo.create({ ...dto, slug, image, imagePublicId });
+        const place = await this.repo.create({ ...dto, slug, image, imagePublicId });
+        return { message: 'Place created successfully', data: place };
     }
     async getAll(query) {
         const { skip, limit, page } = (0, pagination_util_1.buildPagination)(query);
         const filter = this.repo.buildFilter(query);
         const [data, total] = await Promise.all([
-            this.repo.findAll(filter, { skip, limit }),
+            this.repo.findAll(filter, { skip, limit, sort: { createdAt: -1 } }),
             this.repo.count(filter),
         ]);
-        return { data, meta: (0, pagination_util_1.buildMeta)(total, page, limit) };
+        return {
+            message: 'Places retrieved successfully',
+            data,
+            meta: (0, pagination_util_1.buildMeta)(total, page, limit),
+        };
     }
-    async getBySlug(slug) {
-        const place = await this.repo.findOne({ slug, published: true });
+    async getBySlug(slugOrId) {
+        let place = await this.repo.findOne({ slug: slugOrId });
+        if (!place)
+            place = await this.repo.findById(slugOrId).catch(() => null);
         if (!place)
             throw new common_1.NotFoundException('Place not found');
-        return place;
+        return { message: 'Place retrieved successfully', data: place };
     }
     async update(id, dto, file) {
         const place = await this.repo.findById(id);
         if (!place)
             throw new common_1.NotFoundException('Place not found');
         const updates = { ...dto };
-        if (file) {
-            if (place.imagePublicId)
-                await this.cloudinary.delete(place.imagePublicId);
+        if (file?.buffer) {
+            if (place.imagePublicId) {
+                await this.cloudinary.delete(place.imagePublicId).catch(() => null);
+            }
             const r = await this.cloudinary.upload(file.buffer, 'hiddenpak/places');
             updates.image = r.url;
             updates.imagePublicId = r.publicId;
         }
         if (dto.name)
             updates.slug = (0, slug_util_1.generateSlug)(dto.name);
-        return this.repo.updateById(id, updates);
+        const updated = await this.repo.updateById(id, updates);
+        return { message: 'Place updated successfully', data: updated };
     }
     async addGalleryImage(id, file) {
         const place = await this.repo.findById(id);
         if (!place)
             throw new common_1.NotFoundException('Place not found');
         const r = await this.cloudinary.upload(file.buffer, 'hiddenpak/places/gallery');
-        return this.repo.updateById(id, {
-            $push: {
-                gallery: r.url,
-                galleryPublicIds: r.publicId,
-            },
+        const updated = await this.repo.updateById(id, {
+            $push: { gallery: r.url, galleryPublicIds: r.publicId },
         });
+        return { message: 'Gallery image added', data: updated };
     }
     async remove(id) {
         const place = await this.repo.findById(id);
         if (!place)
             throw new common_1.NotFoundException('Place not found');
-        if (place.imagePublicId)
-            await this.cloudinary.delete(place.imagePublicId);
-        for (const pid of place.galleryPublicIds) {
-            await this.cloudinary.delete(pid);
+        if (place.imagePublicId) {
+            await this.cloudinary.delete(place.imagePublicId).catch(() => null);
         }
-        return this.repo.deleteById(id);
+        for (const pid of place.galleryPublicIds ?? []) {
+            await this.cloudinary.delete(pid).catch(() => null);
+        }
+        await this.repo.deleteById(id);
+        return { message: 'Place deleted successfully', data: { success: true } };
     }
 };
 exports.PlacesService = PlacesService;

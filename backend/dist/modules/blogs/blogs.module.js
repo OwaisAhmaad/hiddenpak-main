@@ -22,7 +22,7 @@ exports.BlogsModule = BlogsModule = __decorate([
         imports: [
             mongoose_1.MongooseModule.forFeature([{ name: blog_schema_1.Blog.name, schema: blog_schema_1.BlogSchema }]),
         ],
-        controllers: [blogs_controller_1.BlogsController],
+        controllers: [blogs_controller_1.BlogsPublicController, blogs_controller_1.BlogsAdminController],
         providers: [blogs_service_1.BlogsService, blogs_repository_1.BlogsRepository, cloudinary_service_1.CloudinaryService],
     })
 ], BlogsModule);

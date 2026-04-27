@@ -29,6 +29,10 @@ __decorate([
 __decorate([
     (0, mongoose_1.Prop)({ default: '' }),
     __metadata("design:type", String)
+], Gallery.prototype, "caption", void 0);
+__decorate([
+    (0, mongoose_1.Prop)({ default: '' }),
+    __metadata("design:type", String)
 ], Gallery.prototype, "location", void 0);
 __decorate([
     (0, mongoose_1.Prop)({ default: 'medium', enum: ['tall', 'medium', 'short'] }),

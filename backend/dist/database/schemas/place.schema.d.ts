@@ -7,6 +7,7 @@ export declare class Place {
     category: string;
     description: string;
     longDescription: string;
+    location: string;
     image: string;
     imagePublicId: string;
     gallery: string[];
