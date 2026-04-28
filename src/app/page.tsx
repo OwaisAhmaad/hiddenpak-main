@@ -443,7 +443,7 @@ function HomePage({ navigate, places, blogs, galleryImages, testimonials, setSel
   return (
     <div>
       {/* Hero */}
-      <section className="relative w-full min-h-screen overflow-hidden">
+      <section className="relative w-full min-h-[78vh] overflow-hidden">
         {/* Full-width cinematic background — preloaded for LCP */}
         <img
           src="/images/rectangle-39389.png"
@@ -456,7 +456,7 @@ function HomePage({ navigate, places, blogs, galleryImages, testimonials, setSel
         <div className="absolute inset-0 bg-gradient-to-b from-black/55 via-black/45 to-black/60" />
 
         <div className="relative z-10 w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex flex-col lg:flex-row items-center lg:items-end min-h-screen pt-24 pb-12 lg:pb-0 gap-6">
+          <div className="flex flex-col lg:flex-row items-center lg:items-end min-h-[78vh] pt-20 pb-8 lg:pb-0 gap-6">
 
             {/* LEFT — Text content */}
             <div className="flex-1 flex flex-col justify-center lg:pb-16">
@@ -532,7 +532,7 @@ function HomePage({ navigate, places, blogs, galleryImages, testimonials, setSel
               <img
                 src="/images/hiking-woman.png"
                 alt="Explorer with backpack ready to discover Pakistan"
-                className="h-[78vh] max-h-[680px] w-auto object-contain object-bottom select-none pointer-events-none drop-shadow-[0_0_40px_rgba(0,0,0,0.5)]"
+                className="h-[68vh] max-h-[580px] w-auto object-contain object-bottom select-none pointer-events-none drop-shadow-[0_0_40px_rgba(0,0,0,0.5)]"
                 fetchPriority="high"
                 decoding="async"
               />
@@ -580,7 +580,7 @@ function HomePage({ navigate, places, blogs, galleryImages, testimonials, setSel
                 className="group bg-white rounded-2xl overflow-hidden shadow-sm hover:shadow-lg transition-all duration-300 border border-gray-100"
               >
                 <div className="relative h-48 overflow-hidden">
-                  <img src={place.image} alt={place.name} loading="lazy" decoding="async" className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" />
+                  <img src={place.image || "https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=800&q=80"} alt={place.name} loading="lazy" decoding="async" className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" />
                   <div className="absolute top-3 left-3">
                     <span className="px-2.5 py-1 bg-white/90 backdrop-blur-sm rounded-lg text-xs font-semibold text-[#14532D]">{place.category}</span>
                   </div>
@@ -637,7 +637,7 @@ function HomePage({ navigate, places, blogs, galleryImages, testimonials, setSel
                 onClick={() => { setSelectedBlogId(blog.id); navigate('blog-detail'); }}
               >
                 <div className="relative h-48 overflow-hidden">
-                  <img src={blog.coverImage} alt={blog.title} loading="lazy" decoding="async" className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" />
+                  <img src={blog.coverImage || "https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=800&q=80"} alt={blog.title} loading="lazy" decoding="async" className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" />
                   <div className="absolute top-3 left-3">
                     <span className="px-2.5 py-1 bg-[#F97316] rounded-lg text-xs font-semibold text-white">{blog.category}</span>
                   </div>
@@ -647,7 +647,7 @@ function HomePage({ navigate, places, blogs, galleryImages, testimonials, setSel
                   <p className="text-gray-500 text-sm line-clamp-2 mb-3">{blog.excerpt}</p>
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-2">
-                      <img src={blog.authorImage} alt={blog.author} className="w-6 h-6 rounded-full object-cover" />
+                      <img src={blog.authorImage || "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=100&q=80"} alt={blog.author} className="w-6 h-6 rounded-full object-cover" />
                       <span className="text-gray-500 text-xs">{blog.author}</span>
                     </div>
                     <span className="text-gray-400 text-xs flex items-center gap-1">
@@ -679,7 +679,7 @@ function HomePage({ navigate, places, blogs, galleryImages, testimonials, setSel
                   img.height === 'tall' ? 'row-span-2 aspect-[3/4]' : 'aspect-[4/3]'
                 }`}
               >
-                <img src={img.src} alt={img.alt} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" />
+                <img src={img.src || "https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=800&q=80"} alt={img.alt} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" />
                 <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
                 <div className="absolute bottom-4 left-4 right-4 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
                   <p className="text-white font-semibold text-sm">{img.alt}</p>
@@ -900,7 +900,7 @@ function PlacesPage({ places }: { places: Place[] }) {
               className="group bg-white rounded-2xl overflow-hidden shadow-sm hover:shadow-lg transition-all duration-300 border border-gray-100"
             >
               <div className="relative h-56 overflow-hidden">
-                <img src={place.image} alt={place.name} loading="lazy" decoding="async" className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" />
+                <img src={place.image || "https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=800&q=80"} alt={place.name} loading="lazy" decoding="async" className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" />
                 <div className="absolute top-3 left-3 flex items-center gap-2">
                   <span className="px-2.5 py-1 bg-white/90 backdrop-blur-sm rounded-lg text-xs font-semibold text-[#14532D]">{place.category}</span>
                   {place.featured && <span className="px-2.5 py-1 bg-[#F97316] rounded-lg text-xs font-semibold text-white">Featured</span>}
@@ -955,14 +955,14 @@ function BlogsPage({ blogs, navigate, setSelectedBlogId }: { blogs: Blog[]; navi
           {filtered.map((blog, i) => (
             <motion.article key={blog.id} initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.05 }} className="group bg-white rounded-2xl overflow-hidden shadow-sm hover:shadow-lg transition-all duration-300 border border-gray-100 cursor-pointer" onClick={() => { setSelectedBlogId(blog.id); navigate('blog-detail'); }}>
               <div className="relative h-48 overflow-hidden">
-                <img src={blog.coverImage} alt={blog.title} loading="lazy" decoding="async" className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" />
+                <img src={blog.coverImage || "https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=800&q=80"} alt={blog.title} loading="lazy" decoding="async" className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" />
                 <span className="absolute top-3 left-3 px-2.5 py-1 bg-[#F97316] rounded-lg text-xs font-semibold text-white">{blog.category}</span>
               </div>
               <div className="p-5">
                 <h3 className="font-bold text-[#0B0F19] mb-2 line-clamp-2 group-hover:text-[#F97316] transition-colors">{blog.title}</h3>
                 <p className="text-gray-500 text-sm line-clamp-2 mb-4">{blog.excerpt}</p>
                 <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-2"><img src={blog.authorImage} alt={blog.author} className="w-7 h-7 rounded-full object-cover" /><span className="text-gray-600 text-xs font-medium">{blog.author}</span></div>
+                  <div className="flex items-center gap-2"><img src={blog.authorImage || "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=100&q=80"} alt={blog.author} className="w-7 h-7 rounded-full object-cover" /><span className="text-gray-600 text-xs font-medium">{blog.author}</span></div>
                   <div className="flex items-center gap-3 text-gray-400 text-xs"><span className="flex items-center gap-1"><Clock className="w-3 h-3" />{blog.readTime}</span><span>{blog.date}</span></div>
                 </div>
               </div>
@@ -987,11 +987,11 @@ function BlogDetailPage({ blogs, selectedBlogId, navigate }: { blogs: Blog[]; se
         <button onClick={() => navigate('blogs')} className="flex items-center gap-2 text-gray-500 hover:text-[#F97316] mb-6 text-sm transition-colors">
           <ArrowLeft className="w-4 h-4" />Back to Blogs
         </button>
-        <img src={blog.coverImage} alt={blog.title} className="w-full h-64 sm:h-96 object-cover rounded-2xl mb-8" />
+        <img src={blog.coverImage || "https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=800&q=80"} alt={blog.title} className="w-full h-64 sm:h-96 object-cover rounded-2xl mb-8" />
         <span className="px-3 py-1 bg-[#F97316] text-white text-xs font-semibold rounded-lg">{blog.category}</span>
         <h1 className="text-3xl sm:text-4xl font-bold text-[#0B0F19] mt-4 mb-4">{blog.title}</h1>
         <div className="flex items-center gap-4 mb-8 pb-6 border-b border-gray-100">
-          <div className="flex items-center gap-2"><img src={blog.authorImage} alt={blog.author} className="w-10 h-10 rounded-full object-cover" /><div><p className="font-medium text-sm text-[#0B0F19]">{blog.author}</p><p className="text-gray-500 text-xs">{blog.authorBio}</p></div></div>
+          <div className="flex items-center gap-2"><img src={blog.authorImage || "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=100&q=80"} alt={blog.author} className="w-10 h-10 rounded-full object-cover" /><div><p className="font-medium text-sm text-[#0B0F19]">{blog.author}</p><p className="text-gray-500 text-xs">{blog.authorBio}</p></div></div>
           <div className="flex items-center gap-3 text-gray-400 text-xs ml-auto"><span className="flex items-center gap-1"><Clock className="w-3 h-3" />{blog.readTime}</span><span>{blog.date}</span></div>
         </div>
         <div className="prose prose-gray max-w-none">
@@ -1024,7 +1024,7 @@ function GalleryPage({ images }: { images: GalleryImage[] }) {
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
           {images.map((img, i) => (
             <motion.div key={img.id} initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} transition={{ delay: i * 0.03 }} className={`relative rounded-2xl overflow-hidden group cursor-pointer ${img.height === 'tall' ? 'row-span-2 aspect-[3/4]' : 'aspect-[4/3]'}`} onClick={() => setSelectedImage(img)}>
-              <img src={img.src} alt={img.alt} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" />
+              <img src={img.src || "https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=800&q=80"} alt={img.alt} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" />
               <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
               <div className="absolute bottom-3 left-3 right-3 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
                 <p className="text-white font-semibold text-sm">{img.alt}</p>
@@ -1660,7 +1660,7 @@ function AdminPlaces({ places, fetchData }: { places: Place[]; fetchData: () => 
         {places.map(place => (
           <div key={place.id} className="bg-[#111827] rounded-2xl border border-[#1F2937] overflow-hidden group hover:border-[#14532D]/40 transition-colors">
             <div className="relative h-40 overflow-hidden">
-              <img src={place.image} alt={place.name} className="w-full h-full object-cover" />
+              <img src={place.image || "https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=800&q=80"} alt={place.name} className="w-full h-full object-cover" />
               <div className="absolute top-3 right-3 flex items-center gap-1 px-2 py-1 bg-black/50 backdrop-blur-sm rounded-lg"><Star className="w-3 h-3 text-yellow-400 fill-yellow-400" /><span className="text-white text-xs">{place.rating}</span></div>
               {place.featured && <div className="absolute top-3 left-3 px-2 py-1 bg-[#F97316] rounded-lg text-xs font-semibold text-white">Featured</div>}
             </div>
@@ -1770,7 +1770,7 @@ function AdminGallery({ images, fetchData }: { images: GalleryImage[]; fetchData
       <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
         {images.map(img => (
           <div key={img.id} className="relative rounded-2xl overflow-hidden group bg-[#111827] border border-[#1F2937] aspect-[4/3]">
-            <img src={img.src} alt={img.alt} className="w-full h-full object-cover" />
+            <img src={img.src || "https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=800&q=80"} alt={img.alt} className="w-full h-full object-cover" />
             <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2">
               <button onClick={() => openEdit(img)} className="p-2 bg-blue-500/20 hover:bg-blue-500/40 text-blue-400 rounded-xl transition-colors"><Pencil className="w-5 h-5" /></button>
               <button onClick={() => handleDelete(img.id)} disabled={deleting === img.id} className="p-2 bg-red-500/20 hover:bg-red-500/40 text-red-400 rounded-xl transition-colors disabled:opacity-50">
