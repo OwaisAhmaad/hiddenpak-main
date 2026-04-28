@@ -185,7 +185,7 @@ export default function GalleryPage() {
                     }`}
                   >
                     <Image
-                      src={img.imageUrl}
+                      src={img.imageUrl || "https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=800"}
                       alt={img.caption ?? img.location ?? "Pakistan landscape"}
                       fill
                       className="object-cover transition-transform duration-500 group-hover:scale-110"
