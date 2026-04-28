@@ -810,12 +810,17 @@ function HomePage({ navigate, places, blogs, galleryImages, testimonials, setSel
             >
               <div className="relative">
                 <div className="absolute inset-0 bg-gradient-to-r from-emerald-500/20 to-orange-500/10 rounded-3xl blur-2xl" />
-                <img 
-                  src="https://images.unsplash.com/photo-1491555103944-7c628ba54d3d?w=600&q=80" 
-                  alt="Adventure Woman Hiker" 
+                <img
+                  src="https://images.unsplash.com/photo-1501854140801-50d01698950b?w=600&q=80"
+                  alt="Aerial view of Pakistan's stunning mountain valleys"
                   className="relative rounded-3xl shadow-2xl object-cover h-[500px] w-full"
                 />
                 <div className="absolute inset-0 bg-gradient-to-t from-black/30 to-transparent rounded-3xl" />
+                {/* Floating caption badge */}
+                <div className="absolute bottom-5 left-5 flex items-center gap-2 bg-black/50 backdrop-blur-sm border border-white/10 text-white text-xs font-medium px-4 py-2 rounded-full">
+                  <MapPin className="w-3 h-3 text-[#F97316]" />
+                  Northern Pakistan
+                </div>
               </div>
             </motion.div>
           </div>
