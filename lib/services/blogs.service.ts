@@ -32,7 +32,7 @@ function toBlogFormData(payload: CreateBlogPayload): FormData {
     if (key === 'coverImage' && val instanceof File) {
       fd.append('coverImage', val);          // matches FileInterceptor('coverImage')
     } else if (key === 'tags' && Array.isArray(val)) {
-      val.forEach((t) => fd.append('tags[]', t));
+      val.forEach((t) => fd.append('tags', t));
     } else {
       fd.append(key, String(val));
     }

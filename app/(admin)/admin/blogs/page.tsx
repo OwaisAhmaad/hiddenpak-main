@@ -29,7 +29,7 @@ interface BlogRow {
   slug: string;
 }
 
-const CATEGORIES = ["Trekking", "Culture", "Adventure", "Road Trip", "Wildlife", "Food", "Photography"];
+const CATEGORIES = ["Pakistan", "Trekking", "Culture", "Adventure", "Road Trip", "Wildlife", "Food", "Photography"];
 
 export default function AdminBlogsPage() {
   const [blogs, setBlogs] = useState<BlogRow[]>([]);
