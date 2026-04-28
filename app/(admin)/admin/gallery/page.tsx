@@ -52,7 +52,9 @@ export default function AdminGalleryPage() {
     } catch {
       setError("Failed to load gallery. Displaying mock data.");
       const { galleryImages: staticImages } = await import("@/lib/data");
-      setImages(staticImages as GalleryImage[]);
+      // Map static data shape to GalleryImage shape
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      setImages((staticImages as any[]).map((img: any) => ({ ...img, imageUrl: img.imageUrl ?? img.src ?? "" })));
     } finally {
       setLoading(false);
     }

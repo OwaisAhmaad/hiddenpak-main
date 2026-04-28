@@ -19,7 +19,6 @@ const REGION_COORDS: Record<string, { lat: number; lng: number }> = {
 
 // Default: center of Pakistan
 const DEFAULT_COORDS = { lat: 30.3753, lng: 69.3451 };
-const ZOOM_LEVEL = 10;
 const BBOX_DELTA = 0.5; // degrees to extend around the center
 
 function getCoords(region?: string): { lat: number; lng: number } {

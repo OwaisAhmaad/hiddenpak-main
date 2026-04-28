@@ -95,7 +95,8 @@ export default function AdminPlacesPage() {
       setError("Failed to load places. Displaying mock data.");
       // Fallback to static import for UI preview
       const { places: staticPlaces } = await import("@/lib/data");
-      setPlaces(staticPlaces as Place[]);
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      setPlaces((staticPlaces as any[]).map((p: any) => ({ ...p, _id: p._id ?? p.id ?? String(Math.random()) })));
     } finally {
       setLoading(false);
     }
