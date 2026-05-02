@@ -43,8 +43,16 @@ interface Testimonial {
 
 interface AnalyticsData {
   totalEvents: number;
+  totalVisitors: number;
+  todayEvents: number;
+  todayVisitors: number;
+  weekEvents: number;
+  monthEvents: number;
   eventTypes: { _id: string; count: number }[];
-  recentEvents: { eventType: string; page: string; timestamp: string }[];
+  recentEvents: { eventType: string; page: string; country: string; countryCode: string; city: string; timestamp: string }[];
+  countryBreakdown: { country: string; countryCode: string; visits: number; uniqueVisitors: number }[];
+  topPages: { _id: string; visits: number }[];
+  dailyTrend: { date: string; visits: number; uniqueVisitors: number }[];
 }
 
 type View = 'home' | 'places' | 'blogs' | 'gallery' | 'about' | 'contact' | 'login' | 'dashboard' | 'admin-blogs' | 'admin-places' | 'admin-gallery' | 'admin-analytics' | 'admin-settings' | 'blog-detail';
@@ -58,6 +66,7 @@ export default function HiddenPakApp() {
   const [isAdmin, setIsAdmin] = useState(false);
   const [adminUser, setAdminUser] = useState<{ email: string; name: string } | null>(null);
   const [selectedBlogId, setSelectedBlogId] = useState<string | null>(null);
+  const [pendingSlug, setPendingSlug] = useState<string | null>(null);
 
   // Data states
   const [places, setPlaces] = useState<Place[]>([]);
@@ -121,11 +130,75 @@ export default function HiddenPakApp() {
     }
   }, [fetchAnalytics]);
 
+  // Track a page-view event (fire-and-forget, never blocks UI)
+  const trackPageView = useCallback((page: string) => {
+    try {
+      fetch(`${API}/analytics/event`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          eventType: 'page_view',
+          page,
+          referrer: document.referrer || '',
+        }),
+      }).catch(() => {/* silent */});
+    } catch { /* silent */ }
+  }, []);
+
   const navigate = (view: View) => {
     setCurrentView(view);
     setMobileMenuOpen(false);
     window.scrollTo(0, 0);
+    // Sync URL hash for bookmarkable links
+    const hashMap: Partial<Record<View, string>> = {
+      home: '', places: 'places', blogs: 'blogs', gallery: 'gallery',
+      about: 'about', contact: 'contact',
+    };
+    if (view in hashMap) {
+      const h = hashMap[view];
+      window.history.pushState(null, '', h ? `#${h}` : window.location.pathname.replace(/\/$/, '') || '/');
+      // Track public page views
+      trackPageView(`/${h || ''}`);
+    }
   };
+
+  // Open a specific blog by object — updates URL to #blog/slug
+  const openBlog = useCallback((blog: Blog) => {
+    setSelectedBlogId(blog.id);
+    setCurrentView('blog-detail');
+    setMobileMenuOpen(false);
+    window.scrollTo(0, 0);
+    window.history.pushState(null, '', `#blog/${blog.slug}`);
+    trackPageView(`/blog/${blog.slug}`);
+  }, [trackPageView]);
+
+  // On mount: parse URL hash and navigate to the right view / blog
+  // Also track initial page view
+  useEffect(() => {
+    const hash = window.location.hash.replace('#', '');
+    if (hash.startsWith('blog/')) {
+      setPendingSlug(hash.replace('blog/', ''));
+      trackPageView(`/blog/${hash.replace('blog/', '')}`);
+    } else if (['places', 'blogs', 'gallery', 'about', 'contact'].includes(hash)) {
+      setCurrentView(hash as View);
+      trackPageView(`/${hash}`);
+    } else {
+      trackPageView('/');
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  // Once blogs are loaded and we have a pending slug, open that blog
+  useEffect(() => {
+    if (pendingSlug && blogs.length > 0) {
+      const blog = blogs.find(b => b.slug === pendingSlug);
+      if (blog) {
+        setSelectedBlogId(blog.id);
+        setCurrentView('blog-detail');
+      }
+      setPendingSlug(null);
+    }
+  }, [blogs, pendingSlug]);
 
   const handleLogin = async (email: string, password: string) => {
     const res = await fetch(`${API}/auth/login`, {
@@ -181,6 +254,7 @@ export default function HiddenPakApp() {
           <PublicSite
             currentView={currentView}
             navigate={navigate}
+            openBlog={openBlog}
             mobileMenuOpen={mobileMenuOpen}
             setMobileMenuOpen={setMobileMenuOpen}
             places={places}
@@ -189,7 +263,6 @@ export default function HiddenPakApp() {
             testimonials={testimonials}
             fetchError={fetchError}
             selectedBlogId={selectedBlogId}
-            setSelectedBlogId={setSelectedBlogId}
             onAdminClick={() => navigate('login')}
           />
         ) : isAdminView ? (
@@ -217,15 +290,15 @@ export default function HiddenPakApp() {
 // PUBLIC SITE
 // ============================================
 function PublicSite({
-  currentView, navigate, mobileMenuOpen, setMobileMenuOpen,
+  currentView, navigate, openBlog, mobileMenuOpen, setMobileMenuOpen,
   places, blogs, galleryImages, testimonials, fetchError, selectedBlogId,
-  setSelectedBlogId, onAdminClick
+  onAdminClick
 }: {
-  currentView: View; navigate: (v: View) => void;
+  currentView: View; navigate: (v: View) => void; openBlog: (blog: Blog) => void;
   mobileMenuOpen: boolean; setMobileMenuOpen: (v: boolean) => void;
   places: Place[]; blogs: Blog[]; galleryImages: GalleryImage[];
   testimonials: Testimonial[]; fetchError: string | null; selectedBlogId: string | null;
-  setSelectedBlogId: (id: string | null) => void; onAdminClick: () => void;
+  onAdminClick: () => void;
 }) {
   const navItems = [
     { label: 'Home', view: 'home' as View, icon: Home },
@@ -338,9 +411,9 @@ function PublicSite({
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.3 }}
         >
-          {currentView === 'home' && <HomePage navigate={navigate} places={places} blogs={blogs} galleryImages={galleryImages} testimonials={testimonials} setSelectedBlogId={setSelectedBlogId} />}
+          {currentView === 'home' && <HomePage navigate={navigate} places={places} blogs={blogs} galleryImages={galleryImages} testimonials={testimonials} openBlog={openBlog} />}
           {currentView === 'places' && <PlacesPage places={places} />}
-          {currentView === 'blogs' && <BlogsPage blogs={blogs} navigate={navigate} setSelectedBlogId={setSelectedBlogId} />}
+          {currentView === 'blogs' && <BlogsPage blogs={blogs} navigate={navigate} openBlog={openBlog} />}
           {currentView === 'blog-detail' && <BlogDetailPage blogs={blogs} selectedBlogId={selectedBlogId} navigate={navigate} />}
           {currentView === 'gallery' && <GalleryPage images={galleryImages} />}
           {currentView === 'about' && <AboutPage />}
@@ -431,10 +504,10 @@ function PublicSite({
 // ============================================
 // HOME PAGE
 // ============================================
-function HomePage({ navigate, places, blogs, galleryImages, testimonials, setSelectedBlogId }: {
+function HomePage({ navigate, places, blogs, galleryImages, testimonials, openBlog }: {
   navigate: (v: View) => void; places: Place[]; blogs: Blog[];
   galleryImages: GalleryImage[]; testimonials: Testimonial[];
-  setSelectedBlogId: (id: string | null) => void;
+  openBlog: (blog: Blog) => void;
 }) {
   const featuredPlaces = places.filter(p => p.featured).slice(0, 4);
   const recentBlogs = blogs.slice(0, 3);
@@ -634,7 +707,7 @@ function HomePage({ navigate, places, blogs, galleryImages, testimonials, setSel
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: i * 0.1 }}
                 className="group bg-white rounded-2xl overflow-hidden shadow-sm hover:shadow-lg transition-all duration-300 border border-gray-100 cursor-pointer"
-                onClick={() => { setSelectedBlogId(blog.id); navigate('blog-detail'); }}
+                onClick={() => openBlog(blog)}
               >
                 <div className="relative h-48 overflow-hidden">
                   <img src={blog.coverImage || "https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=800&q=80"} alt={blog.title} loading="lazy" decoding="async" className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" />
@@ -710,23 +783,23 @@ function HomePage({ navigate, places, blogs, galleryImages, testimonials, setSel
             {[
               {
                 title: 'Fairy Meadows Opens for Summer Season',
-                image: 'https://images.unsplash.com/photo-1586348943529-beaae6c28db9?w=600&q=80',
+                image: 'https://images.pexels.com/photos/11313884/pexels-photo-11313884.jpeg?auto=compress&cs=tinysrgb&w=600',
                 category: 'Destinations',
-                date: 'Apr 18, 2025',
+                date: 'Apr 18, 2026',
                 excerpt: 'The iconic Fairy Meadows base camp near Nanga Parbat is now accessible as weather conditions improve. Visitors can enjoy lush green landscapes and panoramic mountain views.',
               },
               {
                 title: 'Hunza Valley Named Top Asian Destination',
-                image: 'https://images.unsplash.com/photo-1599236449793-2db7c0c9b2df?w=600&q=80',
+                image: 'https://images.pexels.com/photos/15556464/pexels-photo-15556464.jpeg?auto=compress&cs=tinysrgb&w=600',
                 category: 'Awards',
-                date: 'Apr 10, 2025',
+                date: 'Apr 10, 2026',
                 excerpt: 'Hunza Valley has been recognised by travel publications as one of Asia\'s top hidden gems. Cherry blossom season draws visitors from across the globe each spring.',
               },
               {
                 title: 'New Eco-Tourism Initiative Launches in Gilgit-Baltistan',
-                image: 'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=600&q=80',
+                image: 'https://images.pexels.com/photos/17913609/pexels-photo-17913609.jpeg?auto=compress&cs=tinysrgb&w=600',
                 category: 'Eco Travel',
-                date: 'Apr 2, 2025',
+                date: 'Apr 2, 2026',
                 excerpt: 'A new government-backed initiative is promoting sustainable tourism across the Northern Areas, protecting pristine wilderness while supporting local communities.',
               },
             ].map((news, i) => (
@@ -937,7 +1010,7 @@ function PlacesPage({ places }: { places: Place[] }) {
 // ============================================
 // BLOGS PAGE
 // ============================================
-function BlogsPage({ blogs, navigate, setSelectedBlogId }: { blogs: Blog[]; navigate: (v: View) => void; setSelectedBlogId: (id: string | null) => void }) {
+function BlogsPage({ blogs, navigate, openBlog }: { blogs: Blog[]; navigate: (v: View) => void; openBlog: (blog: Blog) => void }) {
   const categories = ['All', ...Array.from(new Set(blogs.map(b => b.category)))];
   const [activeCategory, setActiveCategory] = useState('All');
   const filtered = activeCategory === 'All' ? blogs : blogs.filter(b => b.category === activeCategory);
@@ -958,7 +1031,7 @@ function BlogsPage({ blogs, navigate, setSelectedBlogId }: { blogs: Blog[]; navi
         </div>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {filtered.map((blog, i) => (
-            <motion.article key={blog.id} initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.05 }} className="group bg-white rounded-2xl overflow-hidden shadow-sm hover:shadow-lg transition-all duration-300 border border-gray-100 cursor-pointer" onClick={() => { setSelectedBlogId(blog.id); navigate('blog-detail'); }}>
+            <motion.article key={blog.id} initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.05 }} className="group bg-white rounded-2xl overflow-hidden shadow-sm hover:shadow-lg transition-all duration-300 border border-gray-100 cursor-pointer" onClick={() => openBlog(blog)}>
               <div className="relative h-48 overflow-hidden">
                 <img src={blog.coverImage || "https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=800&q=80"} alt={blog.title} loading="lazy" decoding="async" className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" />
                 <span className="absolute top-3 left-3 px-2.5 py-1 bg-[#F97316] rounded-lg text-xs font-semibold text-white">{blog.category}</span>
@@ -1243,7 +1316,7 @@ function AdminPanel({
                 <p className="text-[10px] font-semibold text-[#6B7280] uppercase tracking-widest mb-2 px-3">{section}</p>
                 <div className="space-y-0.5">
                   {items.map(({ label, view, icon: Icon }) => (
-                    <button key={view} onClick={() => { navigate(view); setSidebarOpen(false); }} className={`w-full relative flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all duration-200 ${currentView === view ? 'bg-[#14532D]/20 text-white border-l-2 border-[#F97316] pl-[10px]' : 'text-[#F5F5DC]/70 hover:text-white hover:bg-[#1F2937] border-l-2 border-transparent pl-[10px]'}`}>
+                    <button key={view} onClick={() => { navigate(view); setSidebarOpen(false); if (view === 'admin-analytics') fetchAnalytics(); }} className={`w-full relative flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all duration-200 ${currentView === view ? 'bg-[#14532D]/20 text-white border-l-2 border-[#F97316] pl-[10px]' : 'text-[#F5F5DC]/70 hover:text-white hover:bg-[#1F2937] border-l-2 border-transparent pl-[10px]'}`}>
                       <Icon className="w-4 h-4 flex-shrink-0" /><span>{label}</span>
                     </button>
                   ))}
@@ -1456,12 +1529,36 @@ function AdminDashboard({ places, blogs, galleryImages, analytics, navigate }: {
 // ============================================
 // ADMIN BLOGS
 // ============================================
+// Auto-generates a URL-safe slug from any title (English or Urdu)
+function generateSlug(title: string, category = ''): string {
+  // Extract only Latin characters, numbers, spaces from the title
+  const latinOnly = title.replace(/[^\x00-\x7F]/g, ' ').trim();
+  const fromTitle = latinOnly
+    .toLowerCase()
+    .replace(/[^a-z0-9\s-]/g, '')
+    .trim()
+    .replace(/\s+/g, '-')
+    .replace(/-+/g, '-')
+    .replace(/^-|-$/g, '');
+
+  if (fromTitle.length >= 4) return fromTitle;
+
+  // Fallback: category + timestamp
+  const base = (category || 'blog')
+    .toLowerCase()
+    .replace(/[^a-z0-9]/g, '-')
+    .replace(/-+/g, '-')
+    .replace(/^-|-$/g, '') || 'post';
+  return `${base}-${Date.now()}`;
+}
+
 function AdminBlogs({ blogs, fetchData }: { blogs: Blog[]; fetchData: () => void }) {
   const [deleting, setDeleting] = useState<string | null>(null);
   const [showModal, setShowModal] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
   const [saveError, setSaveError] = useState('');
+  const [slugTouched, setSlugTouched] = useState(false);
   const emptyBlog = { title: '', slug: '', excerpt: '', content: '', coverImage: '', author: '', category: '', tags: '', published: false };
   const [form, setForm] = useState(emptyBlog);
 
@@ -1485,6 +1582,7 @@ function AdminBlogs({ blogs, fetchData }: { blogs: Blog[]; fetchData: () => void
 
   const openEdit = (blog: Blog) => {
     setEditingId(blog.id);
+    setSlugTouched(true); // existing blogs: slug is already set, don't override
     setForm({ title: blog.title, slug: blog.slug, excerpt: blog.excerpt, content: blog.content, coverImage: blog.coverImage, author: blog.author, category: blog.category, tags: Array.isArray(blog.tags) ? blog.tags.join(', ') : '', published: blog.published });
     setShowModal(true);
   };
@@ -1493,12 +1591,13 @@ function AdminBlogs({ blogs, fetchData }: { blogs: Blog[]; fetchData: () => void
     e.preventDefault();
     setSaving(true); setSaveError('');
     try {
-      const payload = { ...form, slug: form.slug || form.title.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, ''), tags: form.tags ? form.tags.split(',').map((t: string) => t.trim()).filter(Boolean) : [], date: new Date().toISOString().split('T')[0] };
+      const finalSlug = form.slug || generateSlug(form.title, form.category);
+      const payload = { ...form, slug: finalSlug, tags: form.tags ? form.tags.split(',').map((t: string) => t.trim()).filter(Boolean) : [], date: new Date().toISOString().split('T')[0] };
       const url = editingId ? `${API}/blogs/${editingId}` : `${API}/blogs`;
       const method = editingId ? 'PUT' : 'POST';
       const res = await fetch(url, { method, headers: getAuthHeader(), body: JSON.stringify(payload) });
       const data = await res.json();
-      if (data.success) { setShowModal(false); setEditingId(null); setForm(emptyBlog); await fetchData(); }
+      if (data.success) { setShowModal(false); setEditingId(null); setForm(emptyBlog); setSlugTouched(false); await fetchData(); }
       else setSaveError(data.message || data.error || 'Failed to save blog');
     } catch { setSaveError('Network error. Please try again.'); }
     finally { setSaving(false); }
@@ -1511,12 +1610,45 @@ function AdminBlogs({ blogs, fetchData }: { blogs: Blog[]; fetchData: () => void
           <div className="bg-[#111827] border border-[#1F2937] rounded-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto">
             <div className="flex items-center justify-between p-6 border-b border-[#1F2937]">
               <h3 className="text-lg font-bold text-white">{editingId ? 'Edit Blog Post' : 'New Blog Post'}</h3>
-              <button onClick={() => { setShowModal(false); setEditingId(null); setForm(emptyBlog); }} className="p-2 hover:bg-[#1F2937] rounded-lg text-[#6B7280] hover:text-white transition-colors"><X className="w-5 h-5" /></button>
+              <button onClick={() => { setShowModal(false); setEditingId(null); setForm(emptyBlog); setSlugTouched(false); }} className="p-2 hover:bg-[#1F2937] rounded-lg text-[#6B7280] hover:text-white transition-colors"><X className="w-5 h-5" /></button>
             </div>
             <form onSubmit={handleCreate} className="p-6 space-y-4">
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div className="sm:col-span-2"><label className="block text-xs text-[#6B7280] mb-1">Title *</label><input required value={form.title} onChange={e => setForm(f => ({ ...f, title: e.target.value }))} className="w-full bg-[#1F2937] border border-[#374151] rounded-xl px-4 py-2.5 text-white text-sm focus:outline-none focus:border-[#F97316]" placeholder="Amazing trek in Hunza..." /></div>
-                <div><label className="block text-xs text-[#6B7280] mb-1">Slug (auto if empty)</label><input value={form.slug} onChange={e => setForm(f => ({ ...f, slug: e.target.value }))} className="w-full bg-[#1F2937] border border-[#374151] rounded-xl px-4 py-2.5 text-white text-sm focus:outline-none focus:border-[#F97316]" placeholder="amazing-trek-hunza" /></div>
+                <div className="sm:col-span-2">
+                  <label className="block text-xs text-[#6B7280] mb-1">Title *</label>
+                  <input
+                    required
+                    value={form.title}
+                    onChange={e => {
+                      const title = e.target.value;
+                      setForm(f => ({
+                        ...f,
+                        title,
+                        // Auto-update slug only if user hasn't manually edited it
+                        slug: slugTouched ? f.slug : generateSlug(title, f.category),
+                      }));
+                    }}
+                    className="w-full bg-[#1F2937] border border-[#374151] rounded-xl px-4 py-2.5 text-white text-sm focus:outline-none focus:border-[#F97316]"
+                    placeholder="Amazing trek in Hunza... or اردو عنوان"
+                  />
+                </div>
+                <div className="sm:col-span-2">
+                  <label className="block text-xs text-[#6B7280] mb-1">
+                    Slug (URL) — auto-generated from title
+                  </label>
+                  <input
+                    value={form.slug}
+                    onChange={e => { setSlugTouched(true); setForm(f => ({ ...f, slug: e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, '-').replace(/-+/g, '-') })); }}
+                    className="w-full bg-[#1F2937] border border-[#374151] rounded-xl px-4 py-2.5 text-white text-sm focus:outline-none focus:border-[#F97316] font-mono"
+                    placeholder="auto-generated-slug"
+                  />
+                  {form.slug && (
+                    <p className="text-xs text-emerald-400 mt-1 flex items-center gap-1">
+                      <CheckCircle2 className="w-3 h-3" />
+                      URL: <span className="text-gray-300">hiddenpak.com/<span className="text-[#F97316]">#blog/{form.slug}</span></span>
+                    </p>
+                  )}
+                </div>
                 <div><label className="block text-xs text-[#6B7280] mb-1">Author</label><input value={form.author} onChange={e => setForm(f => ({ ...f, author: e.target.value }))} className="w-full bg-[#1F2937] border border-[#374151] rounded-xl px-4 py-2.5 text-white text-sm focus:outline-none focus:border-[#F97316]" placeholder="Ahmed Khan" /></div>
                 <div><label className="block text-xs text-[#6B7280] mb-1">Category</label><input value={form.category} onChange={e => setForm(f => ({ ...f, category: e.target.value }))} className="w-full bg-[#1F2937] border border-[#374151] rounded-xl px-4 py-2.5 text-white text-sm focus:outline-none focus:border-[#F97316]" placeholder="Trekking" /></div>
                 <div><label className="block text-xs text-[#6B7280] mb-1">Tags (comma separated)</label><input value={form.tags} onChange={e => setForm(f => ({ ...f, tags: e.target.value }))} className="w-full bg-[#1F2937] border border-[#374151] rounded-xl px-4 py-2.5 text-white text-sm focus:outline-none focus:border-[#F97316]" placeholder="hunza, trek, mountain" /></div>
@@ -1527,7 +1659,7 @@ function AdminBlogs({ blogs, fetchData }: { blogs: Blog[]; fetchData: () => void
               </div>
               {saveError && <p className="text-red-400 text-sm">{saveError}</p>}
               <div className="flex gap-3 pt-2">
-                <button type="button" onClick={() => { setShowModal(false); setEditingId(null); setForm(emptyBlog); }} className="flex-1 px-4 py-2.5 bg-[#1F2937] text-[#9CA3AF] rounded-xl text-sm font-medium hover:bg-[#374151] transition-colors">Cancel</button>
+                <button type="button" onClick={() => { setShowModal(false); setEditingId(null); setForm(emptyBlog); setSlugTouched(false); }} className="flex-1 px-4 py-2.5 bg-[#1F2937] text-[#9CA3AF] rounded-xl text-sm font-medium hover:bg-[#374151] transition-colors">Cancel</button>
                 <button type="submit" disabled={saving} className="flex-1 px-4 py-2.5 bg-[#F97316] hover:bg-[#EA6D0E] text-white rounded-xl text-sm font-semibold transition-colors disabled:opacity-60 flex items-center justify-center gap-2">{saving ? <><Loader2 className="w-4 h-4 animate-spin" />Saving...</> : editingId ? 'Update Post' : 'Create Post'}</button>
               </div>
             </form>
@@ -1798,58 +1930,168 @@ function AdminGallery({ images, fetchData }: { images: GalleryImage[]; fetchData
 // ADMIN ANALYTICS
 // ============================================
 function AdminAnalytics({ analytics }: { analytics: AnalyticsData | null }) {
-  if (!analytics) return <div className="text-[#6B7280] text-center py-12">Loading analytics...</div>;
+  if (!analytics) return (
+    <div className="flex items-center justify-center py-24">
+      <div className="flex flex-col items-center gap-3">
+        <div className="w-10 h-10 border-2 border-[#1F2937] border-t-emerald-500 rounded-full animate-spin" />
+        <p className="text-[#6B7280] text-sm">Loading analytics...</p>
+      </div>
+    </div>
+  );
+
+  // Flag emoji from country code
+  const countryFlag = (code: string) => {
+    if (!code) return '🌍';
+    return code.toUpperCase().replace(/./g, (c: string) => String.fromCodePoint(127397 + c.charCodeAt(0)));
+  };
+
+  // Format page path nicely
+  const formatPage = (page: string) => {
+    if (!page || page === '/') return '🏠 Home';
+    return page.replace(/^\//, '').replace(/-/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
+  };
+
+  const maxCountryVisits = analytics.countryBreakdown[0]?.visits || 1;
+
+  // Stat cards data
+  const statCards = [
+    { label: 'Total Visitors', value: analytics.totalVisitors || analytics.totalEvents, sub: 'All time unique', icon: '👥', color: 'from-emerald-500/20 to-emerald-500/5', border: 'border-emerald-500/30', text: 'text-emerald-400' },
+    { label: 'Today\'s Visitors', value: analytics.todayVisitors || analytics.todayEvents, sub: 'Unique today', icon: '📅', color: 'from-blue-500/20 to-blue-500/5', border: 'border-blue-500/30', text: 'text-blue-400' },
+    { label: 'This Week', value: analytics.weekEvents, sub: 'Page views 7 days', icon: '📈', color: 'from-purple-500/20 to-purple-500/5', border: 'border-purple-500/30', text: 'text-purple-400' },
+    { label: 'This Month', value: analytics.monthEvents, sub: 'Page views 30 days', icon: '🗓️', color: 'from-orange-500/20 to-orange-500/5', border: 'border-orange-500/30', text: 'text-orange-400' },
+  ];
 
   return (
-    <div>
-      <div className="mb-6">
-        <h2 className="text-xl font-bold text-white">Analytics Overview</h2>
-        <p className="text-[#6B7280] text-sm">Platform event tracking and statistics</p>
+    <div className="space-y-6">
+      {/* Header */}
+      <div>
+        <h2 className="text-xl font-bold text-white">Analytics Dashboard</h2>
+        <p className="text-[#6B7280] text-sm mt-1">Real-time visitor tracking and traffic insights</p>
       </div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-5 mb-8">
-        <div className="bg-[#111827] rounded-2xl border border-[#1F2937] p-6">
-          <p className="text-sm text-[#6B7280] mb-2">Total Events Tracked</p>
-          <p className="text-4xl font-bold text-white">{analytics.totalEvents}</p>
-        </div>
-        <div className="bg-[#111827] rounded-2xl border border-[#1F2937] p-6">
-          <p className="text-sm text-[#6B7280] mb-2">Event Types</p>
-          <p className="text-4xl font-bold text-white">{analytics.eventTypes.length}</p>
-        </div>
-        <div className="bg-[#111827] rounded-2xl border border-[#1F2937] p-6">
-          <p className="text-sm text-[#6B7280] mb-2">Recent Events (last 10)</p>
-          <p className="text-4xl font-bold text-white">{analytics.recentEvents.length}</p>
-        </div>
+      {/* Stat Cards */}
+      <div className="grid grid-cols-2 xl:grid-cols-4 gap-4">
+        {statCards.map(card => (
+          <div key={card.label} className={`bg-gradient-to-b ${card.color} rounded-2xl border ${card.border} p-5`}>
+            <div className="text-2xl mb-3">{card.icon}</div>
+            <p className={`text-3xl font-bold ${card.text} mb-1`}>{(card.value ?? 0).toLocaleString()}</p>
+            <p className="text-white font-medium text-sm">{card.label}</p>
+            <p className="text-[#6B7280] text-xs mt-0.5">{card.sub}</p>
+          </div>
+        ))}
       </div>
 
-      {analytics.eventTypes.length > 0 && (
-        <div className="bg-[#111827] rounded-2xl border border-[#1F2937] p-6 mb-6">
-          <h3 className="text-lg font-bold text-white mb-4">Events by Type</h3>
-          <div className="space-y-3">
-            {analytics.eventTypes.map(et => (
-              <div key={et._id} className="flex items-center gap-4 p-3 bg-[#1F2937]/50 rounded-xl">
-                <div className="flex-1 min-w-0">
-                  <p className="text-white font-medium text-sm">{et._id}</p>
+      {/* Country Breakdown + Top Pages row */}
+      <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
+
+        {/* Country Breakdown */}
+        <div className="bg-[#111827] rounded-2xl border border-[#1F2937] p-6">
+          <div className="flex items-center gap-2 mb-5">
+            <span className="text-lg">🌍</span>
+            <h3 className="text-base font-bold text-white">Visitors by Country</h3>
+          </div>
+          {analytics.countryBreakdown.length === 0 ? (
+            <p className="text-[#6B7280] text-sm text-center py-8">No country data yet — visits will appear here once tracked</p>
+          ) : (
+            <div className="space-y-3">
+              {analytics.countryBreakdown.map((c, i) => (
+                <div key={c.country || i} className="flex items-center gap-3">
+                  <span className="text-xl w-8 text-center flex-shrink-0">{countryFlag(c.countryCode)}</span>
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center justify-between mb-1">
+                      <span className="text-white text-sm font-medium truncate">{c.country || 'Unknown'}</span>
+                      <span className="text-emerald-400 text-sm font-bold ml-2 flex-shrink-0">{c.visits.toLocaleString()}</span>
+                    </div>
+                    <div className="h-1.5 bg-[#1F2937] rounded-full overflow-hidden">
+                      <div
+                        className="h-full bg-gradient-to-r from-emerald-500 to-emerald-400 rounded-full transition-all"
+                        style={{ width: `${Math.round((c.visits / maxCountryVisits) * 100)}%` }}
+                      />
+                    </div>
+                  </div>
+                  <span className="text-[#6B7280] text-xs w-14 text-right flex-shrink-0">{c.uniqueVisitors} uniq</span>
                 </div>
-                <span className="px-3 py-1 bg-[#14532D]/20 text-emerald-400 rounded-lg text-sm font-bold">{et.count}</span>
-              </div>
-            ))}
+              ))}
+            </div>
+          )}
+        </div>
+
+        {/* Top Pages */}
+        <div className="bg-[#111827] rounded-2xl border border-[#1F2937] p-6">
+          <div className="flex items-center gap-2 mb-5">
+            <span className="text-lg">📄</span>
+            <h3 className="text-base font-bold text-white">Top Pages</h3>
+          </div>
+          {analytics.topPages.length === 0 ? (
+            <p className="text-[#6B7280] text-sm text-center py-8">No page data yet</p>
+          ) : (
+            <div className="space-y-2">
+              {analytics.topPages.map((page, i) => {
+                const maxP = analytics.topPages[0]?.visits || 1;
+                return (
+                  <div key={page._id || i} className="flex items-center gap-3 p-3 bg-[#1F2937]/40 rounded-xl">
+                    <span className="text-[#6B7280] text-xs font-mono w-4 flex-shrink-0">#{i + 1}</span>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-white text-sm font-medium truncate">{formatPage(page._id)}</p>
+                      <div className="h-1 bg-[#374151] rounded-full mt-1 overflow-hidden">
+                        <div
+                          className="h-full bg-gradient-to-r from-blue-500 to-blue-400 rounded-full"
+                          style={{ width: `${Math.round((page.visits / maxP) * 100)}%` }}
+                        />
+                      </div>
+                    </div>
+                    <span className="text-blue-400 text-sm font-bold flex-shrink-0">{page.visits.toLocaleString()}</span>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* Daily Trend */}
+      {analytics.dailyTrend && analytics.dailyTrend.length > 0 && (
+        <div className="bg-[#111827] rounded-2xl border border-[#1F2937] p-6">
+          <div className="flex items-center gap-2 mb-5">
+            <span className="text-lg">📊</span>
+            <h3 className="text-base font-bold text-white">Last 7 Days</h3>
+          </div>
+          <div className="flex items-end gap-2 h-24">
+            {(() => {
+              const maxV = Math.max(...analytics.dailyTrend.map(d => d.visits), 1);
+              return analytics.dailyTrend.map((d, i) => (
+                <div key={d.date || i} className="flex-1 flex flex-col items-center gap-1">
+                  <span className="text-[#6B7280] text-xs">{d.visits}</span>
+                  <div
+                    className="w-full bg-gradient-to-t from-emerald-600 to-emerald-400 rounded-t-md transition-all"
+                    style={{ height: `${Math.max(4, Math.round((d.visits / maxV) * 72))}px` }}
+                    title={`${d.date}: ${d.visits} visits`}
+                  />
+                  <span className="text-[#6B7280] text-xs">{d.date ? new Date(d.date).toLocaleDateString('en', { weekday: 'short' }) : ''}</span>
+                </div>
+              ));
+            })()}
           </div>
         </div>
       )}
 
+      {/* Recent Visits */}
       {analytics.recentEvents.length > 0 && (
         <div className="bg-[#111827] rounded-2xl border border-[#1F2937] p-6">
-          <h3 className="text-lg font-bold text-white mb-4">Recent Events</h3>
-          <div className="space-y-2">
+          <div className="flex items-center gap-2 mb-5">
+            <span className="text-lg">🕐</span>
+            <h3 className="text-base font-bold text-white">Recent Visits</h3>
+          </div>
+          <div className="space-y-2 max-h-96 overflow-y-auto pr-1">
             {analytics.recentEvents.map((ev, i) => (
-              <div key={i} className="flex items-center gap-4 p-3 bg-[#1F2937]/50 rounded-xl">
+              <div key={i} className="flex items-center gap-3 p-3 bg-[#1F2937]/40 rounded-xl">
+                <span className="text-lg w-8 text-center flex-shrink-0">{countryFlag(ev.countryCode)}</span>
                 <div className="flex-1 min-w-0">
-                  <p className="text-white font-medium text-sm">{ev.eventType}</p>
-                  <p className="text-[#6B7280] text-xs">{ev.page}</p>
+                  <p className="text-white text-sm font-medium truncate">{formatPage(ev.page)}</p>
+                  <p className="text-[#6B7280] text-xs">{ev.country || 'Unknown location'}{ev.city ? ` · ${ev.city}` : ''}</p>
                 </div>
-                <span className="text-[#6B7280] text-xs whitespace-nowrap">
-                  {ev.timestamp ? new Date(ev.timestamp).toLocaleDateString() : ''}
+                <span className="text-[#6B7280] text-xs whitespace-nowrap flex-shrink-0">
+                  {ev.timestamp ? new Date(ev.timestamp).toLocaleString('en', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' }) : ''}
                 </span>
               </div>
             ))}
@@ -1858,8 +2100,10 @@ function AdminAnalytics({ analytics }: { analytics: AnalyticsData | null }) {
       )}
 
       {analytics.totalEvents === 0 && (
-        <div className="bg-[#111827] rounded-2xl border border-[#1F2937] p-12 text-center text-[#6B7280]">
-          No analytics events tracked yet.
+        <div className="bg-[#111827] rounded-2xl border border-[#1F2937] p-16 text-center">
+          <div className="text-4xl mb-4">📊</div>
+          <p className="text-white font-semibold mb-2">No traffic data yet</p>
+          <p className="text-[#6B7280] text-sm">Visitors will appear here automatically once they start browsing your site.</p>
         </div>
       )}
     </div>
