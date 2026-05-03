@@ -1951,14 +1951,20 @@ function AdminAnalytics({ analytics }: { analytics: AnalyticsData | null }) {
     return page.replace(/^\//, '').replace(/-/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
   };
 
-  const maxCountryVisits = analytics.countryBreakdown[0]?.visits || 1;
+  // Safe arrays (Express backend may not return these fields)
+  const countries = analytics.countryBreakdown ?? [];
+  const topPages = analytics.topPages ?? [];
+  const recentEvents = analytics.recentEvents ?? [];
+  const dailyTrend = analytics.dailyTrend ?? [];
+
+  const maxCountryVisits = countries[0]?.visits || 1;
 
   // Stat cards data
   const statCards = [
-    { label: 'Total Visitors', value: analytics.totalVisitors || analytics.totalEvents, sub: 'All time unique', icon: '👥', color: 'from-emerald-500/20 to-emerald-500/5', border: 'border-emerald-500/30', text: 'text-emerald-400' },
-    { label: 'Today\'s Visitors', value: analytics.todayVisitors || analytics.todayEvents, sub: 'Unique today', icon: '📅', color: 'from-blue-500/20 to-blue-500/5', border: 'border-blue-500/30', text: 'text-blue-400' },
-    { label: 'This Week', value: analytics.weekEvents, sub: 'Page views 7 days', icon: '📈', color: 'from-purple-500/20 to-purple-500/5', border: 'border-purple-500/30', text: 'text-purple-400' },
-    { label: 'This Month', value: analytics.monthEvents, sub: 'Page views 30 days', icon: '🗓️', color: 'from-orange-500/20 to-orange-500/5', border: 'border-orange-500/30', text: 'text-orange-400' },
+    { label: 'Total Visitors', value: analytics.totalVisitors ?? analytics.totalEvents, sub: 'All time unique', icon: '👥', color: 'from-emerald-500/20 to-emerald-500/5', border: 'border-emerald-500/30', text: 'text-emerald-400' },
+    { label: 'Today\'s Visitors', value: analytics.todayVisitors ?? analytics.todayEvents ?? 0, sub: 'Unique today', icon: '📅', color: 'from-blue-500/20 to-blue-500/5', border: 'border-blue-500/30', text: 'text-blue-400' },
+    { label: 'This Week', value: analytics.weekEvents ?? 0, sub: 'Page views 7 days', icon: '📈', color: 'from-purple-500/20 to-purple-500/5', border: 'border-purple-500/30', text: 'text-purple-400' },
+    { label: 'This Month', value: analytics.monthEvents ?? 0, sub: 'Page views 30 days', icon: '🗓️', color: 'from-orange-500/20 to-orange-500/5', border: 'border-orange-500/30', text: 'text-orange-400' },
   ];
 
   return (
@@ -1990,11 +1996,11 @@ function AdminAnalytics({ analytics }: { analytics: AnalyticsData | null }) {
             <span className="text-lg">🌍</span>
             <h3 className="text-base font-bold text-white">Visitors by Country</h3>
           </div>
-          {analytics.countryBreakdown.length === 0 ? (
+          {countries.length === 0 ? (
             <p className="text-[#6B7280] text-sm text-center py-8">No country data yet — visits will appear here once tracked</p>
           ) : (
             <div className="space-y-3">
-              {analytics.countryBreakdown.map((c, i) => (
+              {countries.map((c, i) => (
                 <div key={c.country || i} className="flex items-center gap-3">
                   <span className="text-xl w-8 text-center flex-shrink-0">{countryFlag(c.countryCode)}</span>
                   <div className="flex-1 min-w-0">
@@ -2022,12 +2028,12 @@ function AdminAnalytics({ analytics }: { analytics: AnalyticsData | null }) {
             <span className="text-lg">📄</span>
             <h3 className="text-base font-bold text-white">Top Pages</h3>
           </div>
-          {analytics.topPages.length === 0 ? (
+          {topPages.length === 0 ? (
             <p className="text-[#6B7280] text-sm text-center py-8">No page data yet</p>
           ) : (
             <div className="space-y-2">
-              {analytics.topPages.map((page, i) => {
-                const maxP = analytics.topPages[0]?.visits || 1;
+              {topPages.map((page, i) => {
+                const maxP = topPages[0]?.visits || 1;
                 return (
                   <div key={page._id || i} className="flex items-center gap-3 p-3 bg-[#1F2937]/40 rounded-xl">
                     <span className="text-[#6B7280] text-xs font-mono w-4 flex-shrink-0">#{i + 1}</span>
@@ -2050,7 +2056,7 @@ function AdminAnalytics({ analytics }: { analytics: AnalyticsData | null }) {
       </div>
 
       {/* Daily Trend */}
-      {analytics.dailyTrend && analytics.dailyTrend.length > 0 && (
+      {dailyTrend.length > 0 && (
         <div className="bg-[#111827] rounded-2xl border border-[#1F2937] p-6">
           <div className="flex items-center gap-2 mb-5">
             <span className="text-lg">📊</span>
@@ -2058,8 +2064,8 @@ function AdminAnalytics({ analytics }: { analytics: AnalyticsData | null }) {
           </div>
           <div className="flex items-end gap-2 h-24">
             {(() => {
-              const maxV = Math.max(...analytics.dailyTrend.map(d => d.visits), 1);
-              return analytics.dailyTrend.map((d, i) => (
+              const maxV = Math.max(...dailyTrend.map(d => d.visits), 1);
+              return dailyTrend.map((d, i) => (
                 <div key={d.date || i} className="flex-1 flex flex-col items-center gap-1">
                   <span className="text-[#6B7280] text-xs">{d.visits}</span>
                   <div
@@ -2076,14 +2082,14 @@ function AdminAnalytics({ analytics }: { analytics: AnalyticsData | null }) {
       )}
 
       {/* Recent Visits */}
-      {analytics.recentEvents.length > 0 && (
+      {recentEvents.length > 0 && (
         <div className="bg-[#111827] rounded-2xl border border-[#1F2937] p-6">
           <div className="flex items-center gap-2 mb-5">
             <span className="text-lg">🕐</span>
             <h3 className="text-base font-bold text-white">Recent Visits</h3>
           </div>
           <div className="space-y-2 max-h-96 overflow-y-auto pr-1">
-            {analytics.recentEvents.map((ev, i) => (
+            {recentEvents.map((ev, i) => (
               <div key={i} className="flex items-center gap-3 p-3 bg-[#1F2937]/40 rounded-xl">
                 <span className="text-lg w-8 text-center flex-shrink-0">{countryFlag(ev.countryCode)}</span>
                 <div className="flex-1 min-w-0">
@@ -2099,7 +2105,7 @@ function AdminAnalytics({ analytics }: { analytics: AnalyticsData | null }) {
         </div>
       )}
 
-      {analytics.totalEvents === 0 && (
+      {(analytics.totalEvents ?? 0) === 0 && (
         <div className="bg-[#111827] rounded-2xl border border-[#1F2937] p-16 text-center">
           <div className="text-4xl mb-4">📊</div>
           <p className="text-white font-semibold mb-2">No traffic data yet</p>
